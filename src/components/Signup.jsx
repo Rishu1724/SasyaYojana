@@ -9,21 +9,50 @@ const Signup = ({ onSwitchToLogin }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
     if (password !== confirmPassword) {
       setError("Passwords don't match");
+      setLoading(false);
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password should be at least 6 characters");
+      setLoading(false);
       return;
     }
     
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      // Successful signup - redirect to dashboard
+      // Successful signup - redirect to dashboard (handled in App.jsx)
       console.log('User signed up successfully');
     } catch (err) {
-      setError(err.message);
+      console.error('Signup error:', err);
+      let errorMessage = '';
+      
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'Email already in use';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak';
+          break;
+        default:
+          errorMessage = 'Failed to create account. Please try again.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,6 +80,7 @@ const Signup = ({ onSwitchToLogin }) => {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
+            disabled={loading}
           />
         </div>
         
@@ -65,6 +95,7 @@ const Signup = ({ onSwitchToLogin }) => {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
+            disabled={loading}
           />
         </div>
         
@@ -79,14 +110,16 @@ const Signup = ({ onSwitchToLogin }) => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
+            disabled={loading}
           />
         </div>
         
         <button
           type="submit"
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+          className={`w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+          disabled={loading}
         >
-          {t('signup')}
+          {loading ? 'Creating account...' : t('signup')}
         </button>
       </form>
       
@@ -96,6 +129,7 @@ const Signup = ({ onSwitchToLogin }) => {
           <button
             onClick={onSwitchToLogin}
             className="text-green-600 hover:text-green-700 font-medium"
+            disabled={loading}
           >
             {t('login')}
           </button>

@@ -8,15 +8,41 @@ const Login = ({ onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Successful login - redirect to dashboard
+      // Successful login - redirect to dashboard (handled in App.jsx)
       console.log('User logged in successfully');
     } catch (err) {
-      setError(err.message);
+      console.error('Login error:', err);
+      let errorMessage = '';
+      
+      switch (err.code) {
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'User account has been disabled';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'No user found with this email';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password';
+          break;
+        default:
+          errorMessage = 'Failed to login. Please try again.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,6 +70,7 @@ const Login = ({ onSwitchToSignup }) => {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
+            disabled={loading}
           />
         </div>
         
@@ -58,14 +85,16 @@ const Login = ({ onSwitchToSignup }) => {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
+            disabled={loading}
           />
         </div>
         
         <button
           type="submit"
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+          className={`w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+          disabled={loading}
         >
-          {t('login')}
+          {loading ? 'Logging in...' : t('login')}
         </button>
       </form>
       
@@ -75,6 +104,7 @@ const Login = ({ onSwitchToSignup }) => {
           <button
             onClick={onSwitchToSignup}
             className="text-green-600 hover:text-green-700 font-medium"
+            disabled={loading}
           >
             {t('signup')}
           </button>

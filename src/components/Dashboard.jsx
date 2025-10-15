@@ -1,8 +1,19 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
 const Dashboard = () => {
   const { t } = useTranslation();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log('User logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-green-50 p-4">
@@ -11,7 +22,10 @@ const Dashboard = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-green-800">
             Sasya-Mitra Dashboard
           </h1>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+          <button 
+            onClick={handleLogout}
+            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
+          >
             Logout
           </button>
         </div>
