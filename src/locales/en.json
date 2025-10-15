@@ -1,0 +1,19 @@
+{
+  "welcome": "Welcome to Sasya-Yojana Planner",
+  "tagline": "AI-Powered Natural Farming and Agroforestry Design Assistant",
+  "features": "Features",
+  "login": "Login",
+  "signup": "Sign Up",
+  "multilingualSupport": "Multilingual Support (5 Languages)",
+  "aiPlanning": "AI-Based Land-Use Planning",
+  "secureData": "Secure Data Storage on Firebase",
+  "blockchain": "Blockchain Verification (Optional)",
+  "selectLanguage": "Select Language",
+  "english": "English",
+  "hindi": "हिंदी",
+  "marathi": "मराठी",
+  "telugu": "తెలుగు",
+  "kannada": "ಕನ್ನಡ",
+  "continue": "Continue",
+  "footer": "© 2025 Sasya-Suraksha Ledger (SSL) Ecosystem"
+}
