@@ -10,11 +10,11 @@ const LanguageSelector = () => {
   };
 
   const languages = [
-    { code: 'en', label: t('english') },
-    { code: 'hi', label: t('hindi') },
-    { code: 'mr', label: t('marathi') },
-    { code: 'te', label: t('telugu') },
-    { code: 'kn', label: t('kannada') },
+    { code: 'en', label: 'English' },
+    { code: 'hi', label: 'हिंदी' },
+    { code: 'mr', label: 'मराठी' },
+    { code: 'te', label: 'తెలుగు' },
+    { code: 'kn', label: 'ಕನ್ನಡ' },
   ];
 
   return (

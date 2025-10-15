@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "model:train": "python models/train_models.py",
+    "model:train-user": "python models/train_with_user_data.py",
+    "model:process-data": "python data/process_user_datasets.py",
+    "model:api": "python models/api/app.py",
+    "model:notebook": "jupyter notebook --notebook-dir=notebooks"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.7",

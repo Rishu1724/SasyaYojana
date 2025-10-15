@@ -5,6 +5,7 @@ import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { GoogleMap, LoadScript, Marker, Polygon } from '@react-google-maps/api';
 import AgroforestryPlanner from './AgroforestryPlanner';
+import AIPlanner from './AIPlanner';
 
 // Map container style
 const mapContainerStyle = {
@@ -24,7 +25,7 @@ const farmPolygon = [
 ];
 
 const Dashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [center, setCenter] = useState(defaultCenter);
   const [weather, setWeather] = useState(null);
   const [soilData, setSoilData] = useState(null);
@@ -146,6 +147,18 @@ const Dashboard = () => {
     }
   };
 
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
+
+  const languages = [
+    { code: 'en', label: 'English' },
+    { code: 'hi', label: 'हिंदी' },
+    { code: 'mr', label: 'मराठी' },
+    { code: 'te', label: 'తెలుగు' },
+    { code: 'kn', label: 'ಕನ್ನಡ' },
+  ];
+
   return (
     <div className="min-h-screen bg-green-50 p-4">
       <header className="w-full max-w-6xl mx-auto mb-8">
@@ -156,12 +169,29 @@ const Dashboard = () => {
             </h1>
             <p className="text-green-600">AI-Powered Agricultural Advisory System</p>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
-          >
-            Logout
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-wrap gap-1">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => changeLanguage(lang.code)}
+                  className={`px-2 py-1 text-xs rounded ${
+                    i18n.language === lang.code
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
       
@@ -197,6 +227,12 @@ const Dashboard = () => {
             className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'agroforestry' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
           >
             Agroforestry
+          </button>
+          <button 
+            onClick={() => setActiveTab('aiplanner')}
+            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'aiplanner' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
+          >
+            AI Planner
           </button>
           <button 
             onClick={() => setActiveTab('map')}
@@ -551,6 +587,11 @@ const Dashboard = () => {
         {/* Agroforestry Tab */}
         {activeTab === 'agroforestry' && (
           <AgroforestryPlanner />
+        )}
+        
+        {/* AI Planner Tab */}
+        {activeTab === 'aiplanner' && (
+          <AIPlanner />
         )}
         
         {/* Farm Map Tab */}

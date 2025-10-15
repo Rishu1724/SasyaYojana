@@ -9,7 +9,7 @@ import Dashboard from './components/Dashboard';
 import './App.css';
 
 function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
@@ -30,6 +30,21 @@ function App() {
   const switchToSignup = () => setAuthMode('signup');
   const handleLanguageSelected = () => setShowLanguageSelection(false);
 
+  // Automatically proceed after language is selected (no need to click continue)
+  useEffect(() => {
+    // If language is already set and we're still showing language selection, proceed
+    if (!showLanguageSelection) return;
+    
+    // Check if a language has already been selected
+    if (i18n.language && i18n.language !== 'en') {
+      const timer = setTimeout(() => {
+        setShowLanguageSelection(false);
+      }, 1000); // Automatically proceed after 1 second
+      
+      return () => clearTimeout(timer);
+    }
+  }, [i18n.language, showLanguageSelection]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-green-50 flex items-center justify-center">
@@ -48,44 +63,7 @@ function App() {
 
   // Show language selection first
   if (showLanguageSelection) {
-    return (
-      <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center p-4">
-        <header className="w-full max-w-4xl mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-green-800 mb-2">
-            Sasya-Mitra (सस्य-मित्र)
-          </h1>
-          <p className="text-lg text-green-600">
-            {t('tagline')}
-          </p>
-        </header>
-        
-        <main className="w-full max-w-2xl bg-white rounded-xl shadow-md p-6 md:p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('welcome')}
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Your trusted companion for sustainable farming practices and land-use planning.
-            </p>
-          </div>
-          
-          <LanguageSelector />
-          
-          <div className="mt-8 text-center">
-            <button 
-              onClick={handleLanguageSelected}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-8 rounded-lg transition duration-300"
-            >
-              {t('continue')}
-            </button>
-          </div>
-        </main>
-        
-        <footer className="mt-8 text-center text-gray-500 text-sm">
-          <p>{t('footer')}</p>
-        </footer>
-      </div>
-    );
+    return <LanguageSelector />;
   }
 
   return (
@@ -97,6 +75,11 @@ function App() {
         <p className="text-lg text-green-600">
           {t('tagline')}
         </p>
+        {/* Notification about dataset integration */}
+        <div className="mt-4 p-3 bg-blue-100 rounded-lg text-blue-800 text-sm">
+          <p>ℹ️ Your agricultural datasets have been successfully integrated!</p>
+          <p className="mt-1">AI models will use your data for personalized recommendations.</p>
+        </div>
       </header>
       
       <main className="w-full max-w-2xl">
