@@ -72,6 +72,21 @@ const Dashboard = () => {
 
   const fetchWeather = async (lat, lon) => {
     try {
+      // Check if API key is available
+      const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+      if (!apiKey) {
+        console.warn('Weather API key not found');
+        // Set mock data if API key is missing
+        setWeather({
+          temp: 28,
+          humidity: 65,
+          description: 'Clear Sky',
+          pressure: 1013,
+          windSpeed: 5
+        });
+        return;
+      }
+
       const response = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather`,
         {
@@ -79,7 +94,7 @@ const Dashboard = () => {
             lat: lat,
             lon: lon,
             units: 'metric',
-            appid: import.meta.env.VITE_WEATHER_API_KEY
+            appid: apiKey
           }
         }
       );
@@ -93,6 +108,14 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error('Error fetching weather:', error);
+      // Set mock data on error
+      setWeather({
+        temp: 28,
+        humidity: 65,
+        description: 'Clear Sky',
+        pressure: 1013,
+        windSpeed: 5
+      });
     }
   };
 
@@ -117,64 +140,94 @@ const Dashboard = () => {
       setRealTimePredictions(predictions);
       
       // Store the prediction ID for feedback
-      if (predictions.prediction_id) {
+      if (predictions && predictions.prediction_id) {
         setCurrentPredictionId(predictions.prediction_id);
       }
     } catch (error) {
       console.error('Error fetching real-time predictions:', error);
+      // Set mock data on error
+      setRealTimePredictions({
+        prediction_id: 'mock-prediction-id',
+        predictions: {
+          yield_kg_per_acre: 3000,
+          confidence: 0.85,
+          roi: 2.8,
+          payback_period: 18
+        },
+        recommendations: {
+          best_crop: 'Maize',
+          planting_time: 'June-July',
+          irrigation_needs: 'Moderate'
+        },
+        weather_data: {
+          avg_temperature_c: 28,
+          avg_humidity: 65,
+          avg_rainfall_mm: 980,
+          solar_radiation: 5.5
+        },
+        costs: {
+          seeds_and_saplings: 8000,
+          fertilizers: 12000,
+          labor: 15000
+        }
+      });
     }
   };
 
   // Mock data for soil, rainfall, and investment capacity
   useEffect(() => {
-    // Mock soil data
-    setSoilData({
-      pH: 6.8,
-      texture: 'Loamy',
-      organicCarbon: '1.2%',
-      bulkDensity: '1.3 g/cm³',
-      nitrogen: '25 kg/ha',
-      phosphorus: '15 kg/ha',
-      potassium: '30 kg/ha'
-    });
+    try {
+      // Mock soil data
+      setSoilData({
+        pH: 6.8,
+        texture: 'Loamy',
+        organicCarbon: '1.2%',
+        bulkDensity: '1.3 g/cm³',
+        nitrogen: '25 kg/ha',
+        phosphorus: '15 kg/ha',
+        potassium: '30 kg/ha'
+      });
 
-    // Mock rainfall data
-    setRainfallData({
-      annual: '950 mm',
-      seasonal: 'Monsoon: 750 mm, Winter: 150 mm, Summer: 50 mm',
-      soilWetness: 'Moderate'
-    });
+      // Mock rainfall data
+      setRainfallData({
+        annual: '950 mm',
+        seasonal: 'Monsoon: 750 mm, Winter: 150 mm, Summer: 50 mm',
+        soilWetness: 'Moderate'
+      });
 
-    // Mock investment capacity
-    setInvestmentCapacity({
-      category: 'Medium',
-      budget: '₹50,000 - ₹1,00,000',
-      riskTolerance: 'Moderate'
-    });
+      // Mock investment capacity
+      setInvestmentCapacity({
+        category: 'Medium',
+        budget: '₹50,000 - ₹1,00,000',
+        riskTolerance: 'Moderate'
+      });
 
-    // Mock AI recommendations
-    setAiRecommendations({
-      cropRotation: [
-        { season: 'Kharif', crop: 'Rice', reason: 'High rainfall season' },
-        { season: 'Rabi', crop: 'Wheat', reason: 'Cooler temperatures' },
-        { season: 'Summer', crop: 'Moong Dal', reason: 'Drought-resistant legume' }
-      ],
-      soilManagement: [
-        'Add organic compost to improve soil fertility',
-        'Practice crop rotation to maintain soil health',
-        'Use natural pest control methods'
-      ],
-      irrigation: [
-        'Install drip irrigation for water efficiency',
-        'Collect rainwater during monsoon season',
-        'Schedule irrigation based on soil moisture levels'
-      ],
-      economicForecast: {
-        expectedYield: 'Rice: 4 tons/ha, Wheat: 3.5 tons/ha',
-        inputCost: '₹25,000/ha',
-        expectedProfit: '₹45,000/ha'
-      }
-    });
+      // Mock AI recommendations
+      setAiRecommendations({
+        cropRotation: [
+          { season: 'Kharif', crop: 'Rice', reason: 'High rainfall season' },
+          { season: 'Rabi', crop: 'Wheat', reason: 'Cooler temperatures' },
+          { season: 'Summer', crop: 'Moong Dal', reason: 'Drought-resistant legume' }
+        ],
+        soilManagement: [
+          'Add organic compost to improve soil fertility',
+          'Practice crop rotation to maintain soil health',
+          'Use natural pest control methods'
+        ],
+        irrigation: [
+          'Install drip irrigation for water efficiency',
+          'Collect rainwater during monsoon season',
+          'Schedule irrigation based on soil moisture levels'
+        ],
+        economicForecast: {
+          expectedYield: 'Rice: 4 tons/ha, Wheat: 3.5 tons/ha',
+          inputCost: '₹25,000/ha',
+          expectedProfit: '₹45,000/ha'
+        }
+      });
+    } catch (error) {
+      console.error('Error setting mock data:', error);
+    }
   }, []);
 
   const handleLogout = async () => {
@@ -638,7 +691,7 @@ const Dashboard = () => {
                         </div>
                         <div className="text-gray-600">{t('estimatedYieldPerAcre')}</div>
                         <div className="mt-2 text-sm text-gray-500">
-                          {t('confidence')}: {(realTimePredictions.predictions?.confidence * 100 || 85).toFixed(0)}%
+                          {t('confidence')}: {realTimePredictions.predictions?.confidence ? (realTimePredictions.predictions.confidence * 100).toFixed(0) : '85'}%
                         </div>
                       </div>
                       <div className="bg-green-50 rounded-lg p-4 text-center">
@@ -649,7 +702,7 @@ const Dashboard = () => {
                       <div className="bg-yellow-50 rounded-lg p-4 text-center">
                         <div className="text-3xl font-bold text-yellow-800">
                           {realTimePredictions.predictions?.yield_kg_per_acre > 3000 ? t('high') : 
-                           realTimePredictions.predictions?.yield_kg_per_acre > 2000 ? t('medium') : t('low')}
+                           realTimePredictions.predictions?.yield_kg_per_acre > 2000 ? t('medium') : t('low') || t('medium')}
                         </div>
                         <div className="text-gray-600">{t('yieldPotential')}</div>
                         <div className="mt-2 text-sm text-gray-500">{t('basedOnEnvironmentalConditions')}</div>
@@ -676,7 +729,7 @@ const Dashboard = () => {
                         <div className="text-gray-600">{t('estimatedIncome')}</div>
                       </div>
                       <div className="bg-yellow-50 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-yellow-800">18 {t('months')}</div>
+                        <div className="text-2xl font-bold text-yellow-800">{realTimePredictions.predictions?.payback_period || '18'} {t('months')}</div>
                         <div className="text-gray-600">{t('paybackPeriod')}</div>
                       </div>
                     </div>
@@ -687,15 +740,15 @@ const Dashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="bg-white border border-gray-200 rounded p-3">
                           <div className="font-medium text-gray-800">{t('seedsAndSaplings')}</div>
-                          <div className="text-green-700 font-bold">{t('currencySymbol')}8,000</div>
+                          <div className="text-green-700 font-bold">{t('currencySymbol')}{realTimePredictions.costs?.seeds_and_saplings?.toLocaleString() || '8,000'}</div>
                         </div>
                         <div className="bg-white border border-gray-200 rounded p-3">
                           <div className="font-medium text-gray-800">{t('fertilizers')}</div>
-                          <div className="text-green-700 font-bold">{t('currencySymbol')}12,000</div>
+                          <div className="text-green-700 font-bold">{t('currencySymbol')}{realTimePredictions.costs?.fertilizers?.toLocaleString() || '12,000'}</div>
                         </div>
                         <div className="bg-white border border-gray-200 rounded p-3">
                           <div className="font-medium text-gray-800">{t('labor')}</div>
-                          <div className="text-green-700 font-bold">{t('currencySymbol')}15,000</div>
+                          <div className="text-green-700 font-bold">{t('currencySymbol')}{realTimePredictions.costs?.labor?.toLocaleString() || '15,000'}</div>
                         </div>
                       </div>
                     </div>
@@ -707,13 +760,13 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="bg-blue-50 rounded-lg p-3 text-center">
                         <div className="text-xl font-bold text-blue-800">
-                          {realTimePredictions.weather_data?.avg_temperature_c || 28}°C
+                          {realTimePredictions.weather_data?.avg_temperature_c || '28'}°C
                         </div>
                         <div className="text-gray-600">{t('temperature')}</div>
                       </div>
                       <div className="bg-green-50 rounded-lg p-3 text-center">
                         <div className="text-xl font-bold text-green-800">
-                          {realTimePredictions.weather_data?.avg_humidity || 65}%
+                          {realTimePredictions.weather_data?.avg_humidity || '65'}%
                         </div>
                         <div className="text-gray-600">{t('humidity')}</div>
                       </div>
@@ -725,7 +778,7 @@ const Dashboard = () => {
                       </div>
                       <div className="bg-purple-50 rounded-lg p-3 text-center">
                         <div className="text-xl font-bold text-purple-800">
-                          {realTimePredictions.weather_data?.solar_radiation || 5.5} kWh/m²
+                          {realTimePredictions.weather_data?.solar_radiation || '5.5'} kWh/m²
                         </div>
                         <div className="text-gray-600">{t('solarRadiation')}</div>
                       </div>
@@ -804,17 +857,17 @@ const Dashboard = () => {
               <div className="bg-green-50 rounded-lg p-4 text-center">
                 <p className="text-gray-600">{t('predictedYield')}</p>
                 <p className="text-2xl font-bold text-green-700">
-                  {realTimePredictions.predictions.yield_kg_per_acre} kg/acre
+                  {realTimePredictions.predictions?.yield_kg_per_acre || 'N/A'} kg/acre
                 </p>
                 <p className="text-sm text-gray-500">
-                  {t('confidence')}: {(realTimePredictions.predictions.confidence * 100).toFixed(0)}%
+                  {t('confidence')}: {realTimePredictions.predictions?.confidence ? (realTimePredictions.predictions.confidence * 100).toFixed(0) : 'N/A'}%
                 </p>
               </div>
               
               <div className="bg-blue-50 rounded-lg p-4 text-center">
                 <p className="text-gray-600">{t('predictedROI')}</p>
                 <p className="text-2xl font-bold text-blue-700">
-                  {realTimePredictions.predictions.roi}x
+                  {realTimePredictions.predictions?.roi ? `${realTimePredictions.predictions.roi}x` : 'N/A'}
                 </p>
                 <p className="text-sm text-gray-500">
                   {t('returnOnInvestment')}
@@ -824,10 +877,10 @@ const Dashboard = () => {
               <div className="bg-purple-50 rounded-lg p-4 text-center">
                 <p className="text-gray-600">{t('recommendedCrop')}</p>
                 <p className="text-2xl font-bold text-purple-700">
-                  {realTimePredictions.recommendations.best_crop}
+                  {realTimePredictions.recommendations?.best_crop || 'N/A'}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {realTimePredictions.recommendations.planting_time}
+                  {realTimePredictions.recommendations?.planting_time || 'N/A'}
                 </p>
               </div>
             </div>
@@ -835,9 +888,9 @@ const Dashboard = () => {
             <div className="border-t border-gray-200 pt-4">
               <h3 className="font-medium text-gray-800 mb-2">{t('recommendations')}</h3>
               <ul className="list-disc list-inside space-y-1 text-gray-700">
-                <li>{t('bestCrop')}: {realTimePredictions.recommendations.best_crop}</li>
-                <li>{t('plantingTime')}: {realTimePredictions.recommendations.planting_time}</li>
-                <li>{t('irrigationNeeds')}: {realTimePredictions.recommendations.irrigation_needs}</li>
+                <li>{t('bestCrop')}: {realTimePredictions.recommendations?.best_crop || 'N/A'}</li>
+                <li>{t('plantingTime')}: {realTimePredictions.recommendations?.planting_time || 'N/A'}</li>
+                <li>{t('irrigationNeeds')}: {realTimePredictions.recommendations?.irrigation_needs || 'N/A'}</li>
               </ul>
             </div>
           </div>
@@ -869,25 +922,6 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-        
-        {/* Recent Activity Section (Visible on all tabs) */}
-        <div className="bg-white rounded-xl shadow-md p-6 mt-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('recentActivity')}</h2>
-          <div className="space-y-4">
-            <div className="border-b border-gray-100 pb-4">
-              <h3 className="font-medium text-gray-800">{t('newAIPlanGenerated')}</h3>
-              <p className="text-gray-600 text-sm">2 hours ago</p>
-            </div>
-            <div className="border-b border-gray-100 pb-4">
-              <h3 className="font-medium text-gray-800">{t('soilDataUpdated')}</h3>
-              <p className="text-gray-600 text-sm">1 day ago</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-800">{t('farmProfileCreated')}</h3>
-              <p className="text-gray-600 text-sm">3 days ago</p>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
   );

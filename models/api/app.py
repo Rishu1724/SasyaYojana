@@ -20,7 +20,8 @@ from training.model_trainer import AgriYieldModel, AgriROIModel
 from recommendation.engine import AgriRecommendationEngine, SoilData, WeatherData, EconomicData
 
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to allow requests from the frontend origin
+CORS(app, origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"])
 
 # Global variables for models
 yield_model = None
