@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -10,10 +11,10 @@ const mapContainerStyle = {
   height: '400px'
 };
 
-// Example center of map (India)
-const center = { lat: 20.5937, lng: 78.9629 };
+// Default center (fallback if geolocation fails)
+const defaultCenter = { lat: 20.5937, lng: 78.9629 };
 
-// Example farm polygon (replace with dynamic farmer input)
+// Example farm polygon (replace with dynamic farmer input later)
 const farmPolygon = [
   { lat: 20.60, lng: 78.95 },
   { lat: 20.61, lng: 78.95 },
@@ -23,6 +24,58 @@ const farmPolygon = [
 
 const Dashboard = () => {
   const { t } = useTranslation();
+  const [center, setCenter] = useState(defaultCenter);
+  const [weather, setWeather] = useState(null);
+
+  // Get user location using browser geolocation
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userCenter = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setCenter(userCenter);
+
+          // Fetch weather for user location
+          fetchWeather(userCenter.lat, userCenter.lng);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Fetch weather for default location if geolocation fails
+          fetchWeather(defaultCenter.lat, defaultCenter.lng);
+        }
+      );
+    } else {
+      // Fetch weather for default location if geolocation not supported
+      fetchWeather(defaultCenter.lat, defaultCenter.lng);
+    }
+  }, []);
+
+  const fetchWeather = async (lat, lon) => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather`,
+        {
+          params: {
+            lat: lat,
+            lon: lon,
+            units: 'metric',
+            appid: import.meta.env.VITE_WEATHER_API_KEY
+          }
+        }
+      );
+      const data = response.data;
+      setWeather({
+        temp: data.main.temp,
+        humidity: data.main.humidity,
+        description: data.weather[0].description
+      });
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -94,24 +147,37 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* ================= WEATHER SECTION ================= */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Local Weather</h2>
+          {weather ? (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <p>🌡 Temperature: <span className="font-medium">{weather.temp}°C</span></p>
+              <p>💧 Humidity: <span className="font-medium">{weather.humidity}%</span></p>
+              <p>🌤 Condition: <span className="font-medium capitalize">{weather.description}</span></p>
+            </div>
+          ) : (
+            <p className="text-gray-500">Loading weather data...</p>
+          )}
+        </div>
+
         {/* ================= GOOGLE MAP SECTION ================= */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Farm Map</h2>
           <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-  <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={6}>
-    <Polygon
-      paths={farmPolygon}
-      options={{
-        fillColor: '#34D399',
-        fillOpacity: 0.3,
-        strokeColor: '#059669',
-        strokeWeight: 2
-      }}
-    />
-    <Marker position={{ lat: 20.605, lng: 78.955 }} />
-    <Marker position={{ lat: 20.607, lng: 78.965 }} />
-  </GoogleMap>
-</LoadScript>     
+            <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={16}>
+              <Polygon
+                paths={farmPolygon}
+                options={{
+                  fillColor: '#34D399',
+                  fillOpacity: 0.3,
+                  strokeColor: '#059669',
+                  strokeWeight: 2
+                }}
+              />
+              <Marker position={center} />
+            </GoogleMap>
+          </LoadScript>
         </div>
       </main>
     </div>
