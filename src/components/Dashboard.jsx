@@ -2,6 +2,24 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
+import { GoogleMap, LoadScript, Marker, Polygon } from '@react-google-maps/api';
+
+// Map container style
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px'
+};
+
+// Example center of map (India)
+const center = { lat: 20.5937, lng: 78.9629 };
+
+// Example farm polygon (replace with dynamic farmer input)
+const farmPolygon = [
+  { lat: 20.60, lng: 78.95 },
+  { lat: 20.61, lng: 78.95 },
+  { lat: 20.61, lng: 78.97 },
+  { lat: 20.60, lng: 78.97 }
+];
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -58,7 +76,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
           <div className="space-y-4">
             <div className="border-b border-gray-100 pb-4">
@@ -74,6 +92,26 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm">3 days ago</p>
             </div>
           </div>
+        </div>
+
+        {/* ================= GOOGLE MAP SECTION ================= */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Farm Map</h2>
+          <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+  <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={6}>
+    <Polygon
+      paths={farmPolygon}
+      options={{
+        fillColor: '#34D399',
+        fillOpacity: 0.3,
+        strokeColor: '#059669',
+        strokeWeight: 2
+      }}
+    />
+    <Marker position={{ lat: 20.605, lng: 78.955 }} />
+    <Marker position={{ lat: 20.607, lng: 78.965 }} />
+  </GoogleMap>
+</LoadScript>     
         </div>
       </main>
     </div>
