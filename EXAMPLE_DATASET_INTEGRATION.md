@@ -87,14 +87,20 @@ This will:
 The processed data is accessible through the AgroIntel service in the frontend:
 
 ```javascript
-import { AgroIntelService } from './src/services/agroIntelService';
+import agroIntelService from './src/services/agroIntelService';
 
-// Get AI-powered recommendations
-const recommendations = await AgroIntelService.getAgriculturalRecommendations({
+// Get real-time predictions
+const predictions = await agroIntelService.fetchRealTimePredictions({
   location: { lat: 18.5204, lng: 73.8567 },
-  farmSize: 5, // hectares
-  soilType: 'black',
-  waterAvailability: 'medium'
+  land_area_acres: 5,
+  soil: {
+    ph: 6.5,
+    organic_carbon: 1.2,
+    nitrogen: 150,
+    phosphorus: 30,
+    potassium: 150
+  },
+  budget_inr: 50000
 });
 ```
 

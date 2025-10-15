@@ -1,95 +1,170 @@
-# Sasya-Mitra (सस्य-मित्र)
+# Sasya-Mitra: AI-Driven Agricultural Assistant
 
-AI-Powered Natural Farming and Agroforestry Design Assistant for Small and Marginal Farmers
-
-## Overview
-
-Sasya-Mitra is a multilingual, full-stack web platform that provides AI-based land-use planning for small and marginal farmers. The platform is designed to be fast, secure, and optimized for rural network conditions.
+Sasya-Mitra is an advanced agricultural AI system that helps farmers make informed decisions about crop selection, planting schedules, and resource allocation. Built with modern technologies, it provides personalized recommendations based on location, soil conditions, weather data, and economic factors.
 
 ## Features
 
-- Multilingual Support (English, Hindi, Marathi, Telugu, Kannada)
-- AI-Based Land-Use Planning
-- Secure Data Storage on Firebase
-- Mobile-Friendly Responsive Design
-- Blockchain Verification (Optional)
+- 🌍 **Location-based Analysis**: Uses GPS coordinates to provide region-specific recommendations
+- 🌱 **Soil Analysis**: Integrates with ISRIC SoilGrids API for detailed soil property analysis
+- ☀️ **Weather Integration**: Uses NASA POWER API for accurate climate data
+- 🤖 **AI-Powered Recommendations**: Machine learning models for crop yield and ROI prediction
+- 🌳 **Agroforestry Planning**: Comprehensive agroforestry system design
+- 💰 **Economic Projections**: Investment analysis and return on investment calculations
+- ♻️ **Sustainability Metrics**: Environmental impact assessment
+- 🌐 **Multi-language Support**: Available in English, Hindi, Marathi, Telugu, and Kannada
+- 📱 **Responsive Design**: Works on desktop and mobile devices
+- 🔐 **Secure Authentication**: Firebase Authentication for user accounts
+- 🔄 **Continuous Learning**: Improves predictions based on farmer feedback
 
-## Technology Stack
+## Prerequisites
 
-- **Frontend**: React.js + Tailwind CSS
-- **Localization**: i18next + react-i18next
-- **Backend**: Firebase Cloud Functions (Node.js)
-- **Database**: Firestore (NoSQL)
-- **Auth**: Firebase Authentication
-- **Storage**: Firebase Storage
-- **Hosting**: Firebase Hosting
-- **Optional**: Polygon/Hyperledger Blockchain
+- Node.js (v14 or higher)
+- Python (v3.8 or higher)
+- npm or yarn
+- Firebase account
+- API keys for:
+  - NASA POWER API
+  - OpenWeatherMap API
+  - ISRIC SoilGrids API
 
-## Getting Started
+## Installation
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Set up Firebase configuration in `.env` file
-4. Run the development server: `npm run dev`
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/sasya-mitra.git
+   cd sasya-mitra
+   ```
 
-## Working with Agricultural Datasets
+2. Install frontend dependencies:
+   ```bash
+   npm install
+   ```
 
-This version of Sasya-Mitra is designed to work with your specific agricultural datasets:
+3. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Your Datasets
+4. Set up Firebase:
+   - Create a Firebase project at https://console.firebase.google.com/
+   - Add your Firebase configuration to `src/firebase.js`
+   - Enable Authentication (Email/Password and Google)
+   - Enable Firestore Database
 
-1. **Year-wise Damage Caused Due To Floods, Cyclonic Storm, Landslides etc.csv** - Natural disaster impact data
-2. **1. NASA POWER Data (Rainfall, Temperature, Humidity, Radiation) 👆🏻.csv** - Weather and climate data
-3. **All India level Average Yield of Principal Crops from 2001-02 to 2015-16.csv** - Historical crop yield data
-4. **All India level Area Under Principal Crops from 2001-02 to 2015-16.csv** - Crop cultivation area data
-5. **Production of principle crops.csv** - Crop production data
-6. **price.csv** - Crop price data
+5. Set up environment variables:
+   - Create a `.env` file in the root directory
+   - Add your API keys:
+     ```
+     VITE_WEATHER_API_KEY=your_openweathermap_api_key
+     ```
 
-### Processing Your Datasets
+## Dataset Integration
 
-1. Place all your CSV files in the `data/` directory
-2. Process your datasets: `npm run model:process-data`
+Sasya-Mitra uses several agricultural datasets to power its AI models:
 
-### Training AI Models with Your Data
+1. NASA POWER Data (Rainfall, Temperature, Humidity, Radiation)
+2. All India level Average Yield of Principal Crops (2001-2015)
+3. All India level Area Under Principal Crops (2001-2015)
+4. Production of principle crops
+5. Crop price data (Agmarknet)
+6. Natural disaster damage data
 
-1. Train models using your datasets: `npm run model:train-user`
-2. The trained models will be saved in `models/saved_models/`
+See [DATASET_INTEGRATION_SUMMARY.md](DATASET_INTEGRATION_SUMMARY.md) for detailed information on how these datasets are integrated.
 
-### Using the Trained Models
+## Model Training
 
-Once trained, your models will be automatically used by the Sasya-Mitra web application to provide AI-powered recommendations.
+To train the AI models with your datasets:
+
+1. Place your datasets in the `data/` directory
+2. Run the preprocessing script:
+   ```bash
+   npm run model:process-data
+   ```
+3. Train the models:
+   ```bash
+   npm run model:train
+   ```
+
+## Continuous Learning
+
+Sasya-Mitra implements a continuous learning system that improves prediction accuracy over time:
+
+1. **Data Collection**: Prediction results and farmer feedback are stored in Firebase Firestore
+2. **Model Retraining**: Models are periodically retrained with collected feedback data
+3. **Accuracy Improvement**: Real feedback leads to better predictions
+
+To start the continuous learning scheduler:
+```bash
+npm run model:schedule-retraining
+```
+
+See [CONTINUOUS_LEARNING_IMPLEMENTATION.md](CONTINUOUS_LEARNING_IMPLEMENTATION.md) for detailed implementation information.
+
+## Running the Application
+
+1. Start the AI model API server:
+   ```bash
+   python models/api/app.py
+   ```
+
+2. In a new terminal, start the frontend development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open your browser and navigate to `http://localhost:5173`
+
+## Building for Production
+
+To create a production build:
+
+```bash
+npm run build
+```
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
 
 ## Project Structure
 
 ```
-src/
-├── components/        # React components
-├── locales/           # Language translation files
-├── firebase.js        # Firebase configuration
-├── i18n.js            # Internationalization setup
-├── App.jsx            # Main App component
-└── main.jsx           # Entry point
-
-data/
-├── Your datasets here
-
-models/
-├── saved_models/      # Trained AI models
-├── training/          # Model training code
-├── preprocessing/     # Data preprocessing utilities
-└── api/               # API for model serving
+sasya-mitra/
+├── data/                 # Agricultural datasets
+├── models/               # AI models and training scripts
+│   ├── preprocessing/    # Data preprocessing utilities
+│   ├── training/         # Model training implementations
+│   ├── recommendation/   # Recommendation engine
+│   └── api/             # Flask API for model serving
+├── src/                  # Frontend source code
+│   ├── components/       # React components
+│   ├── services/         # Service integrations
+│   ├── locales/          # Translation files
+│   └── firebase.js       # Firebase configuration
+├── public/               # Static assets
+├── docs/                 # Documentation
+└── tests/                # Test files
 ```
 
-## Available Scripts
+## Technologies Used
 
-- `npm run dev` - Starts the development server
-- `npm run build` - Builds the app for production
-- `npm run preview` - Previews the built app locally
-- `npm run model:process-data` - Process your agricultural datasets
-- `npm run model:train-user` - Train AI models with your datasets
-- `npm run model:api` - Start the model API server
-- `npm run model:notebook` - Open Jupyter notebook for model development
+- **Frontend**: React, Tailwind CSS, Firebase SDK
+- **Backend**: Python, Flask, Scikit-learn, XGBoost
+- **Data Sources**: NASA POWER API, ISRIC SoilGrids API, OpenWeatherMap API
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Authentication
+- **Deployment**: Vite, Firebase Hosting (optional)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is part of the Sasya-Suraksha Ledger (SSL) ecosystem.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please open an issue on the GitHub repository or contact the maintainers.

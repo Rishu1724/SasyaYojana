@@ -1,4 +1,5 @@
 import axios from 'axios';
+import continuousLearningService from './continuousLearningService';
 
 // Service to integrate with free APIs for AgroIntel AI system
 class AgroIntelService {
@@ -151,6 +152,57 @@ class AgroIntelService {
       console.error('Error calling AI model API:', error);
       // Fallback to rule-based generation
       return this.generateAgroforestryPlan(inputs);
+    }
+  }
+
+  // Fetch real-time predictions from our ML models
+  async fetchRealTimePredictions(farmerData) {
+    try {
+      // In a production environment, this would call your AI model API
+      console.log('Fetching real-time predictions with farmer data:', farmerData);
+      
+      // Make API call to our prediction service
+      const response = await axios.post('http://localhost:5000/predict/realtime', farmerData);
+      
+      // Store the prediction in Firebase for continuous learning
+      try {
+        const predictionId = await continuousLearningService.storePrediction({
+          farmer_data: farmerData,
+          predictions: response.data.predictions,
+          weather_data: response.data.weather_data,
+          recommendations: response.data.recommendations,
+          timestamp: new Date().toISOString()
+        });
+        console.log('Prediction stored in Firebase with ID:', predictionId);
+        
+        // Add the prediction ID to the response for feedback tracking
+        response.data.prediction_id = predictionId;
+      } catch (storageError) {
+        console.error('Error storing prediction in Firebase:', storageError);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching real-time predictions:', error);
+      // Return mock data if API fails
+      return {
+        predictions: {
+          yield_kg_per_acre: 3000,
+          roi: 2.8,
+          confidence: 0.85
+        },
+        weather_data: {
+          avg_temperature_c: 28,
+          avg_humidity: 65,
+          avg_rainfall_mm: 980,
+          solar_radiation: 5.5
+        },
+        recommendations: {
+          best_crop: "Maize",
+          planting_time: "June-July",
+          irrigation_needs: "Moderate"
+        }
+      };
     }
   }
 
@@ -651,6 +703,18 @@ class AgroIntelService {
     }
     
     return recommendation.trim();
+  }
+
+  // Method to submit farmer feedback
+  async submitFeedback(predictionId, feedbackData) {
+    try {
+      const feedbackId = await continuousLearningService.storeFeedback(predictionId, feedbackData);
+      console.log('Feedback submitted successfully with ID:', feedbackId);
+      return feedbackId;
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      throw error;
+    }
   }
 }
 

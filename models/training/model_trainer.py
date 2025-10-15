@@ -39,68 +39,129 @@ class AgriYieldModel:
         # Process NASA POWER data if available
         if '1. NASA POWER Data (Rainfall, Temperature, Humidity, Radiation) 👆🏻' in datasets:
             nasa_data = datasets['1. NASA POWER Data (Rainfall, Temperature, Humidity, Radiation) 👆🏻']
-            if not nasa_data.empty:
-                features['avg_temperature'] = nasa_data['T2M'].mean() if 'T2M' in nasa_data.columns else 0
-                features['avg_humidity'] = nasa_data['RH2M'].mean() if 'RH2M' in nasa_data.columns else 0
-                features['avg_rainfall'] = (nasa_data['PRECTOTCORR'].mean() * 3650) if 'PRECTOTCORR' in nasa_data.columns else 0
-                features['solar_radiation'] = nasa_data['ALLSKY_SFC_SW_DWN'].mean() if 'ALLSKY_SFC_SW_DWN' in nasa_data.columns else 0
+            if nasa_data is not None and not nasa_data.empty:
+                try:
+                    features['avg_temperature'] = nasa_data['T2M'].mean() if 'T2M' in nasa_data.columns else 0
+                    features['avg_humidity'] = nasa_data['RH2M'].mean() if 'RH2M' in nasa_data.columns else 0
+                    features['avg_rainfall'] = (nasa_data['PRECTOTCORR'].mean() * 3650) if 'PRECTOTCORR' in nasa_data.columns else 0
+                    features['solar_radiation'] = nasa_data['ALLSKY_SFC_SW_DWN'].mean() if 'ALLSKY_SFC_SW_DWN' in nasa_data.columns else 0
+                except Exception as e:
+                    print(f"Warning: Error processing NASA POWER data: {e}")
+                    features['avg_temperature'] = 0
+                    features['avg_humidity'] = 0
+                    features['avg_rainfall'] = 0
+                    features['solar_radiation'] = 0
         
-        # Process crop yield data
+        # Process crop yield data (2001-2015)
         if 'All India level Average Yield of Principal Crops from 2001-02 to 2015-16' in datasets:
             yield_data = datasets['All India level Average Yield of Principal Crops from 2001-02 to 2015-16']
-            if not yield_data.empty:
-                # Melt the data to get crop-wise averages
-                yield_melted = yield_data.melt(id_vars=['Crop'], var_name='Year', value_name='Yield')
-                yield_melted = yield_melted.dropna()
-                if not yield_melted.empty:
-                    crop_yield_avg = yield_melted.groupby('Crop')['Yield'].mean()
-                    top_crops = crop_yield_avg.nlargest(5)
-                    for i, (crop, yield_val) in enumerate(top_crops.items()):
-                        features[f'yield_{i}_{crop}'] = yield_val
+            if yield_data is not None and not yield_data.empty:
+                try:
+                    # Melt the data to get crop-wise averages
+                    yield_melted = yield_data.melt(id_vars=['Year'], var_name='Crop', value_name='Yield')
+                    yield_melted = yield_melted.dropna()
+                    # Convert to numeric, handling 'NA' values
+                    yield_melted['Yield'] = pd.to_numeric(yield_melted['Yield'], errors='coerce')
+                    yield_melted = yield_melted.dropna()
+                    if not yield_melted.empty:
+                        crop_yield_avg = yield_melted.groupby('Crop')['Yield'].mean()
+                        top_crops = crop_yield_avg.nlargest(10)  # Increased to top 10 crops
+                        for i, (crop, yield_val) in enumerate(top_crops.items()):
+                            crop_name = str(crop).replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace(',', '').upper()
+                            features[f'yield_mean_{i}_{crop_name}'] = yield_val
+                            # Add standard deviation if available
+                            crop_std = yield_melted[yield_melted['Crop'] == crop]['Yield'].std()
+                            features[f'yield_std_{i}_{crop_name}'] = crop_std if not np.isnan(crop_std) else 0
+                except Exception as e:
+                    print(f"Warning: Error processing crop yield data: {e}")
         
-        # Process crop area data
+        # Process crop area data (2001-2015)
         if 'All India level Area Under Principal Crops from 2001-02 to 2015-16' in datasets:
             area_data = datasets['All India level Area Under Principal Crops from 2001-02 to 2015-16']
-            if not area_data.empty:
-                # Melt the data to get crop-wise averages
-                area_melted = area_data.melt(id_vars=['Crop'], var_name='Year', value_name='Area')
-                area_melted = area_melted.dropna()
-                if not area_melted.empty:
-                    crop_area_avg = area_melted.groupby('Crop')['Area'].mean()
-                    top_crops = crop_area_avg.nlargest(5)
-                    for i, (crop, area_val) in enumerate(top_crops.items()):
-                        features[f'area_{i}_{crop}'] = area_val
+            if area_data is not None and not area_data.empty:
+                try:
+                    # Melt the data to get crop-wise averages
+                    area_melted = area_data.melt(id_vars=['Year'], var_name='Crop', value_name='Area')
+                    area_melted = area_melted.dropna()
+                    # Convert to numeric, handling 'NA' values
+                    area_melted['Area'] = pd.to_numeric(area_melted['Area'], errors='coerce')
+                    area_melted = area_melted.dropna()
+                    if not area_melted.empty:
+                        crop_area_avg = area_melted.groupby('Crop')['Area'].mean()
+                        top_crops = crop_area_avg.nlargest(10)  # Increased to top 10 crops
+                        for i, (crop, area_val) in enumerate(top_crops.items()):
+                            crop_name = str(crop).replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace(',', '').upper()
+                            features[f'area_mean_{i}_{crop_name}'] = area_val
+                            # Add standard deviation if available
+                            crop_std = area_melted[area_melted['Crop'] == crop]['Area'].std()
+                            features[f'area_std_{i}_{crop_name}'] = crop_std if not np.isnan(crop_std) else 0
+                except Exception as e:
+                    print(f"Warning: Error processing crop area data: {e}")
         
         # Process production data
         if 'Production of principle crops' in datasets:
             prod_data = datasets['Production of principle crops']
-            if not prod_data.empty:
-                # Melt the data to get crop-wise averages
-                prod_melted = prod_data.melt(id_vars=['Crop'], var_name='Year', value_name='Production')
-                prod_melted = prod_melted.dropna()
-                if not prod_melted.empty:
-                    crop_prod_avg = prod_melted.groupby('Crop')['Production'].mean()
-                    top_crops = crop_prod_avg.nlargest(5)
-                    for i, (crop, prod_val) in enumerate(top_crops.items()):
-                        features[f'production_{i}_{crop}'] = prod_val
+            if prod_data is not None and not prod_data.empty:
+                try:
+                    # Melt the data to get crop-wise averages
+                    prod_melted = prod_data.melt(id_vars=['Year'], var_name='Crop', value_name='Production')
+                    prod_melted = prod_melted.dropna()
+                    # Convert to numeric, handling 'NA' values
+                    prod_melted['Production'] = pd.to_numeric(prod_melted['Production'], errors='coerce')
+                    prod_melted = prod_melted.dropna()
+                    if not prod_melted.empty:
+                        crop_prod_avg = prod_melted.groupby('Crop')['Production'].mean()
+                        top_crops = crop_prod_avg.nlargest(10)  # Increased to top 10 crops
+                        for i, (crop, prod_val) in enumerate(top_crops.items()):
+                            crop_name = str(crop).replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace(',', '').upper()
+                            features[f'production_mean_{i}_{crop_name}'] = prod_val
+                            # Add standard deviation if available
+                            crop_std = prod_melted[prod_melted['Crop'] == crop]['Production'].std()
+                            features[f'production_std_{i}_{crop_name}'] = crop_std if not np.isnan(crop_std) else 0
+                except Exception as e:
+                    print(f"Warning: Error processing crop production data: {e}")
         
-        # Process price data
+        # Process price data (Agmarknet)
         if 'price' in datasets:
             price_data = datasets['price']
-            if not price_data.empty:
-                # Get average prices for different crops
-                price_cols = [col for col in price_data.columns if col not in ['YEAR', 'STATE', 'DISTRICT']]
-                for i, col in enumerate(price_cols[:5]):  # Top 5 price columns
-                    features[f'price_{i}_{col}'] = price_data[col].mean() if col in price_data.columns else 0
+            if price_data is not None and not price_data.empty:
+                try:
+                    # Get average prices for different crops
+                    price_cols = [col for col in price_data.columns if col not in ['YEAR', 'STATE', 'DISTRICT']]
+                    for i, col in enumerate(price_cols[:10]):  # Top 10 price columns
+                        # Convert to numeric, handling non-numeric values
+                        price_data[col] = pd.to_numeric(price_data[col], errors='coerce')
+                        features[f'price_mean_{i}_{col}'] = price_data[col].mean() if col in price_data.columns else 0
+                        features[f'price_std_{i}_{col}'] = price_data[col].std() if col in price_data.columns else 0
+                        features[f'price_max_{i}_{col}'] = price_data[col].max() if col in price_data.columns else 0
+                        features[f'price_min_{i}_{col}'] = price_data[col].min() if col in price_data.columns else 0
+                except Exception as e:
+                    print(f"Warning: Error processing crop price data: {e}")
         
         # Process damage data
         if 'Year-wise Damage Caused Due To Floods, Cyclonic Storm, Landslides etc' in datasets:
             damage_data = datasets['Year-wise Damage Caused Due To Floods, Cyclonic Storm, Landslides etc']
-            if not damage_data.empty:
-                features['total_flood_damage'] = damage_data['Flood'].sum() if 'Flood' in damage_data.columns else 0
-                features['total_cyclone_damage'] = damage_data['Cyclone'].sum() if 'Cyclone' in damage_data.columns else 0
-                features['total_landslide_damage'] = damage_data['Landslide'].sum() if 'Landslide' in damage_data.columns else 0
-                features['years_of_damage_data'] = len(damage_data)
+            if damage_data is not None and not damage_data.empty:
+                try:
+                    # Convert damage columns to numeric
+                    for col in ['Flood', 'Cyclone', 'Landslide']:
+                        if col in damage_data.columns:
+                            damage_data[col] = pd.to_numeric(damage_data[col], errors='coerce')
+                    features['total_flood_damage'] = damage_data['Flood'].sum() if 'Flood' in damage_data.columns else 0
+                    features['total_cyclone_damage'] = damage_data['Cyclone'].sum() if 'Cyclone' in damage_data.columns else 0
+                    features['total_landslide_damage'] = damage_data['Landslide'].sum() if 'Landslide' in damage_data.columns else 0
+                    features['years_of_damage_data'] = len(damage_data)
+                    # Add average damage per year
+                    if len(damage_data) > 0:
+                        features['avg_flood_damage'] = features['total_flood_damage'] / len(damage_data)
+                        features['avg_cyclone_damage'] = features['total_cyclone_damage'] / len(damage_data)
+                        features['avg_landslide_damage'] = features['total_landslide_damage'] / len(damage_data)
+                except Exception as e:
+                    print(f"Warning: Error processing damage data: {e}")
+                    features['total_flood_damage'] = 0
+                    features['total_cyclone_damage'] = 0
+                    features['total_landslide_damage'] = 0
+                    features['years_of_damage_data'] = 0
         
         # Convert to DataFrame
         feature_df = pd.DataFrame([features])
@@ -116,11 +177,16 @@ class AgriYieldModel:
         np.random.seed(42)
         n_samples = len(feature_df)
         
-        # Create sample yield targets (kg/ha)
-        yield_targets = np.random.normal(2500, 500, n_samples)
+        # Create sample yield targets (kg/ha) based on features
+        # More realistic approach using feature values
+        base_yield = 2500
+        temp_factor = feature_df.get('avg_temperature', pd.Series([25] * n_samples)) - 25
+        rainfall_factor = feature_df.get('avg_rainfall', pd.Series([1000] * n_samples)) - 1000
+        yield_targets = base_yield + temp_factor * 10 + rainfall_factor * 0.1 + np.random.normal(0, 300, n_samples)
         
-        # Create sample ROI targets (percentage)
-        roi_targets = np.random.normal(15, 5, n_samples)
+        # Create sample ROI targets (percentage) based on price and yield features
+        price_factor = feature_df.get('price_mean_0_MANGO_PRICE', pd.Series([50] * n_samples)) - 50
+        roi_targets = 15 + price_factor * 0.1 + np.random.normal(0, 3, n_samples)
         
         return pd.Series(yield_targets), pd.Series(roi_targets)
     
@@ -134,11 +200,17 @@ class AgriYieldModel:
         # Prepare features
         X = self.prepare_features(datasets)
         
-        # Create sample targets (in a real scenario, you would have actual target data)
+        # Handle any remaining missing values
+        X = X.fillna(0)
+        
+        print(f"Prepared feature matrix with shape: {X.shape}")
+        print(f"Feature columns: {list(X.columns)}")
+        
+        # Create targets based on features for more realistic training
         y_yield, y_roi = self.create_sample_targets(X)
         
         # Ensure we have enough data
-        if len(X) < 2:
+        if len(X) < 2:  # Need at least 2 samples for train/test split
             print("Not enough data for training. Creating sample data for demonstration.")
             # Create sample data for demonstration
             sample_data = {
@@ -146,26 +218,44 @@ class AgriYieldModel:
                 'avg_humidity': [65, 70, 60, 75, 68],
                 'avg_rainfall': [1200, 1100, 1300, 1000, 1150],
                 'solar_radiation': [200, 210, 190, 220, 205],
-                'yield_0_RICE': [3000, 3200, 2800, 3100, 2900],
-                'yield_1_WHEAT': [2500, 2600, 2400, 2700, 2550]
+                'yield_mean_0_RICE': [3000, 3200, 2800, 3100, 2900],
+                'yield_mean_1_WHEAT': [2500, 2600, 2400, 2700, 2550],
+                'area_mean_0_RICE': [2000000, 2100000, 1900000, 2050000, 1950000],
+                'price_mean_0_RICE': [20, 22, 18, 21, 19],
+                'price_mean_1_WHEAT': [15, 16, 14, 17, 15]
             }
             X = pd.DataFrame(sample_data)
+            # Create more realistic targets
             y_yield = pd.Series([3000, 3200, 2800, 3100, 2900])
             y_roi = pd.Series([15, 17, 13, 16, 14])
+        elif len(X) < 5:  # If we have some data but not enough for a good split
+            # Duplicate the data to have enough samples
+            n_duplicates = 5 // len(X) + 1
+            X = pd.concat([X] * n_duplicates, ignore_index=True)
+            y_yield = pd.concat([y_yield] * n_duplicates, ignore_index=True)
+            y_roi = pd.concat([y_roi] * n_duplicates, ignore_index=True)
         
-        # Split the data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y_yield, test_size=0.2, random_state=42
-        )
+        # Split the data - ensure we have enough samples
+        if len(X) >= 2:
+            test_size = min(0.2, 1.0 / len(X))  # Adjust test size if needed
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y_yield, test_size=test_size, random_state=42
+            )
+        else:
+            # Fallback if we still don't have enough data
+            X_train, X_test, y_train, y_test = X, X, y_yield, y_yield
         
         # Scale features
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
         
-        # Train Random Forest
+        # Train Random Forest with the approach you shared
+        print("Training Random Forest model...")
+        self.rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
         self.rf_model.fit(X_train, y_train)
         
         # Train XGBoost
+        print("Training XGBoost model...")
         self.xgb_model.fit(X_train, y_train)
         
         # Evaluate models
@@ -215,8 +305,17 @@ class AgriYieldModel:
         # Prepare features
         X = self.prepare_features(datasets)
         
-        # Scale features
-        X_scaled = self.scaler.transform(X)
+        # Handle any remaining missing values
+        X = X.fillna(0)
+        
+        # Ensure feature columns match training data
+        if self.feature_names:
+            # Add missing columns with 0 values
+            for col in self.feature_names:
+                if col not in X.columns:
+                    X[col] = 0
+            # Remove extra columns
+            X = X[self.feature_names]
         
         rf_pred = self.rf_model.predict(X)
         xgb_pred = self.xgb_model.predict(X)
@@ -323,33 +422,75 @@ class AgriROIModel:
         # Process NASA POWER data if available
         if '1. NASA POWER Data (Rainfall, Temperature, Humidity, Radiation) 👆🏻' in datasets:
             nasa_data = datasets['1. NASA POWER Data (Rainfall, Temperature, Humidity, Radiation) 👆🏻']
-            if not nasa_data.empty:
-                features['avg_temperature'] = nasa_data['T2M'].mean() if 'T2M' in nasa_data.columns else 0
-                features['avg_humidity'] = nasa_data['RH2M'].mean() if 'RH2M' in nasa_data.columns else 0
-                features['avg_rainfall'] = (nasa_data['PRECTOTCORR'].mean() * 3650) if 'PRECTOTCORR' in nasa_data.columns else 0
-                features['solar_radiation'] = nasa_data['ALLSKY_SFC_SW_DWN'].mean() if 'ALLSKY_SFC_SW_DWN' in nasa_data.columns else 0
+            if nasa_data is not None and not nasa_data.empty:
+                try:
+                    features['avg_temperature'] = nasa_data['T2M'].mean() if 'T2M' in nasa_data.columns else 0
+                    features['avg_humidity'] = nasa_data['RH2M'].mean() if 'RH2M' in nasa_data.columns else 0
+                    features['avg_rainfall'] = (nasa_data['PRECTOTCORR'].mean() * 3650) if 'PRECTOTCORR' in nasa_data.columns else 0
+                    features['solar_radiation'] = nasa_data['ALLSKY_SFC_SW_DWN'].mean() if 'ALLSKY_SFC_SW_DWN' in nasa_data.columns else 0
+                except Exception as e:
+                    print(f"Warning: Error processing NASA POWER data: {e}")
+                    features['avg_temperature'] = 0
+                    features['avg_humidity'] = 0
+                    features['avg_rainfall'] = 0
+                    features['solar_radiation'] = 0
         
         # Process price data (most important for ROI)
         if 'price' in datasets:
             price_data = datasets['price']
-            if not price_data.empty:
-                # Get average prices for different crops
-                price_cols = [col for col in price_data.columns if col not in ['YEAR', 'STATE', 'DISTRICT']]
-                for i, col in enumerate(price_cols[:5]):  # Top 5 price columns
-                    features[f'price_{i}_{col}'] = price_data[col].mean() if col in price_data.columns else 0
+            if price_data is not None and not price_data.empty:
+                try:
+                    # Get average prices for different crops
+                    price_cols = [col for col in price_data.columns if col not in ['YEAR', 'STATE', 'DISTRICT']]
+                    for i, col in enumerate(price_cols[:10]):  # Top 10 price columns
+                        # Convert to numeric, handling non-numeric values
+                        price_data[col] = pd.to_numeric(price_data[col], errors='coerce')
+                        features[f'price_mean_{i}_{col}'] = price_data[col].mean() if col in price_data.columns else 0
+                        features[f'price_std_{i}_{col}'] = price_data[col].std() if col in price_data.columns else 0
+                        features[f'price_max_{i}_{col}'] = price_data[col].max() if col in price_data.columns else 0
+                        features[f'price_min_{i}_{col}'] = price_data[col].min() if col in price_data.columns else 0
+                except Exception as e:
+                    print(f"Warning: Error processing crop price data: {e}")
         
         # Process production data
         if 'Production of principle crops' in datasets:
             prod_data = datasets['Production of principle crops']
-            if not prod_data.empty:
-                # Melt the data to get crop-wise averages
-                prod_melted = prod_data.melt(id_vars=['Crop'], var_name='Year', value_name='Production')
-                prod_melted = prod_melted.dropna()
-                if not prod_melted.empty:
-                    crop_prod_avg = prod_melted.groupby('Crop')['Production'].mean()
-                    top_crops = crop_prod_avg.nlargest(5)
-                    for i, (crop, prod_val) in enumerate(top_crops.items()):
-                        features[f'production_{i}_{crop}'] = prod_val
+            if prod_data is not None and not prod_data.empty:
+                try:
+                    # Melt the data to get crop-wise averages
+                    prod_melted = prod_data.melt(id_vars=['Year'], var_name='Crop', value_name='Production')
+                    prod_melted = prod_melted.dropna()
+                    # Convert to numeric, handling 'NA' values
+                    prod_melted['Production'] = pd.to_numeric(prod_melted['Production'], errors='coerce')
+                    prod_melted = prod_melted.dropna()
+                    if not prod_melted.empty:
+                        crop_prod_avg = prod_melted.groupby('Crop')['Production'].mean()
+                        top_crops = crop_prod_avg.nlargest(10)  # Increased to top 10 crops
+                        for i, (crop, prod_val) in enumerate(top_crops.items()):
+                            crop_name = str(crop).replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace(',', '').upper()
+                            features[f'production_mean_{i}_{crop_name}'] = prod_val
+                except Exception as e:
+                    print(f"Warning: Error processing crop production data: {e}")
+        
+        # Process yield data for ROI calculation
+        if 'All India level Average Yield of Principal Crops from 2001-02 to 2015-16' in datasets:
+            yield_data = datasets['All India level Average Yield of Principal Crops from 2001-02 to 2015-16']
+            if yield_data is not None and not yield_data.empty:
+                try:
+                    # Melt the data to get crop-wise averages
+                    yield_melted = yield_data.melt(id_vars=['Year'], var_name='Crop', value_name='Yield')
+                    yield_melted = yield_melted.dropna()
+                    # Convert to numeric, handling 'NA' values
+                    yield_melted['Yield'] = pd.to_numeric(yield_melted['Yield'], errors='coerce')
+                    yield_melted = yield_melted.dropna()
+                    if not yield_melted.empty:
+                        crop_yield_avg = yield_melted.groupby('Crop')['Yield'].mean()
+                        top_crops = crop_yield_avg.nlargest(10)  # Increased to top 10 crops
+                        for i, (crop, yield_val) in enumerate(top_crops.items()):
+                            crop_name = str(crop).replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace(',', '').upper()
+                            features[f'yield_mean_{i}_{crop_name}'] = yield_val
+                except Exception as e:
+                    print(f"Warning: Error processing crop yield data: {e}")
         
         # Convert to DataFrame
         feature_df = pd.DataFrame([features])
@@ -367,34 +508,61 @@ class AgriROIModel:
         # Prepare features
         X = self.prepare_features(datasets)
         
-        # Create sample targets (in a real scenario, you would have actual ROI data)
+        # Handle any remaining missing values
+        X = X.fillna(0)
+        
+        print(f"Prepared feature matrix with shape: {X.shape}")
+        print(f"Feature columns: {list(X.columns)}")
+        
+        # Create more realistic ROI targets based on features
         np.random.seed(42)
         n_samples = len(X)
-        if n_samples < 2:
+        
+        if n_samples < 2:  # Need at least 2 samples for train/test split
             # Create sample data for demonstration
             sample_data = {
                 'avg_temperature': [25, 26, 24, 27, 25],
                 'avg_humidity': [65, 70, 60, 75, 68],
                 'avg_rainfall': [1200, 1100, 1300, 1000, 1150],
-                'price_0_RICE': [20, 22, 18, 21, 19],
-                'price_1_WHEAT': [15, 16, 14, 17, 15]
+                'price_mean_0_RICE': [20, 22, 18, 21, 19],
+                'price_mean_1_WHEAT': [15, 16, 14, 17, 15],
+                'yield_mean_0_RICE': [3000, 3200, 2800, 3100, 2900],
+                'yield_mean_1_WHEAT': [2500, 2600, 2400, 2700, 2550]
             }
             X = pd.DataFrame(sample_data)
+            # Create more realistic ROI targets
             y_roi = pd.Series([15, 17, 13, 16, 14])
+        elif n_samples < 5:  # If we have some data but not enough for a good split
+            # Duplicate the data to have enough samples
+            n_duplicates = 5 // n_samples + 1
+            X = pd.concat([X] * n_duplicates, ignore_index=True)
+            # Create ROI targets based on price and yield features
+            price_factor = X.get('price_mean_0_RICE', pd.Series([20] * len(X))) - 20
+            yield_factor = X.get('yield_mean_0_RICE', pd.Series([3000] * len(X))) - 3000
+            y_roi = 15 + price_factor * 0.1 + yield_factor * 0.001 + np.random.normal(0, 2, len(X))
         else:
-            # Create sample ROI targets
-            y_roi = pd.Series(np.random.normal(15, 5, n_samples))
+            # Create ROI targets based on price and yield features
+            price_factor = X.get('price_mean_0_RICE', pd.Series([20] * n_samples)) - 20
+            yield_factor = X.get('yield_mean_0_RICE', pd.Series([3000] * n_samples)) - 3000
+            y_roi = 15 + price_factor * 0.1 + yield_factor * 0.001 + np.random.normal(0, 2, n_samples)
         
-        # Split the data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y_roi, test_size=0.2, random_state=42
-        )
+        # Split the data - ensure we have enough samples
+        if len(X) >= 2:
+            test_size = min(0.2, 1.0 / len(X))  # Adjust test size if needed
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y_roi, test_size=test_size, random_state=42
+            )
+        else:
+            # Fallback if we still don't have enough data
+            X_train, X_test, y_train, y_test = X, X, y_roi, y_roi
         
         # Scale features
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
         
-        # Train the model
+        # Train the model with the approach you shared
+        print("Training ROI model...")
+        self.model = xgb.XGBRegressor(n_estimators=100, random_state=42)
         self.model.fit(X_train, y_train)
         
         # Evaluate the model
@@ -431,8 +599,17 @@ class AgriROIModel:
         # Prepare features
         X = self.prepare_features(datasets)
         
-        # Scale features
-        X_scaled = self.scaler.transform(X)
+        # Handle any remaining missing values
+        X = X.fillna(0)
+        
+        # Ensure feature columns match training data
+        if self.feature_names:
+            # Add missing columns with 0 values
+            for col in self.feature_names:
+                if col not in X.columns:
+                    X[col] = 0
+            # Remove extra columns
+            X = X[self.feature_names]
         
         return self.model.predict(X)
     

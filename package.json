@@ -1,18 +1,16 @@
 {
-  "name": "sasya-mitra",
+  "name": "sasya-yojana",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "model:process-data": "python models/process_user_datasets.py",
     "model:train": "python models/train_models.py",
-    "model:train-user": "python models/train_with_user_data.py",
-    "model:process-data": "python data/process_user_datasets.py",
-    "model:api": "python models/api/app.py",
-    "model:notebook": "jupyter notebook --notebook-dir=notebooks"
+    "model:retrain": "python models/retrain_model.py",
+    "model:schedule-retraining": "python models/schedule_retraining.py"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.7",
@@ -26,16 +24,16 @@
     "react-icons": "^5.5.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^9.8.8",
-    "eslint": "^8.0.0",
-    "eslint-plugin-react": "^7.33.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.0",
-    "postcss": "^7.0.39",
-    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.17",
-    "vite": "^6.3.4"
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.3",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "vite": "^5.3.4"
   }
 }

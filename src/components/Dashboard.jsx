@@ -6,6 +6,8 @@ import { signOut } from 'firebase/auth';
 import { GoogleMap, LoadScript, Marker, Polygon } from '@react-google-maps/api';
 import AgroforestryPlanner from './AgroforestryPlanner';
 import AIPlanner from './AIPlanner';
+import agroIntelService from '../services/agroIntelService';
+import FeedbackForm from './FeedbackForm';
 
 // Map container style
 const mapContainerStyle = {
@@ -32,7 +34,10 @@ const Dashboard = () => {
   const [rainfallData, setRainfallData] = useState(null);
   const [investmentCapacity, setInvestmentCapacity] = useState(null);
   const [aiRecommendations, setAiRecommendations] = useState(null);
+  const [realTimePredictions, setRealTimePredictions] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [currentPredictionId, setCurrentPredictionId] = useState(null);
 
   // Get user location using browser geolocation
   useEffect(() => {
@@ -47,16 +52,21 @@ const Dashboard = () => {
 
           // Fetch weather for user location
           fetchWeather(userCenter.lat, userCenter.lng);
+          
+          // Fetch real-time predictions
+          fetchRealTimePredictions(userCenter.lat, userCenter.lng);
         },
         (error) => {
           console.error('Error getting location:', error);
           // Fetch weather for default location if geolocation fails
           fetchWeather(defaultCenter.lat, defaultCenter.lng);
+          fetchRealTimePredictions(defaultCenter.lat, defaultCenter.lng);
         }
       );
     } else {
       // Fetch weather for default location if geolocation not supported
       fetchWeather(defaultCenter.lat, defaultCenter.lng);
+      fetchRealTimePredictions(defaultCenter.lat, defaultCenter.lng);
     }
   }, []);
 
@@ -83,6 +93,35 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error('Error fetching weather:', error);
+    }
+  };
+
+  const fetchRealTimePredictions = async (lat, lon) => {
+    try {
+      // Prepare farmer data for prediction
+      const farmerData = {
+        location: { lat, lng: lon },
+        land_area_acres: 2.5, // Default value, would be dynamic in real app
+        soil: {
+          ph: 6.8,
+          organic_carbon: 1.2,
+          nitrogen: 150,
+          phosphorus: 30,
+          potassium: 150
+        },
+        budget_inr: 50000 // Default value, would be dynamic in real app
+      };
+      
+      // Fetch real-time predictions from our ML models
+      const predictions = await agroIntelService.fetchRealTimePredictions(farmerData);
+      setRealTimePredictions(predictions);
+      
+      // Store the prediction ID for feedback
+      if (predictions.prediction_id) {
+        setCurrentPredictionId(predictions.prediction_id);
+      }
+    } catch (error) {
+      console.error('Error fetching real-time predictions:', error);
     }
   };
 
@@ -202,43 +241,43 @@ const Dashboard = () => {
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'overview' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
           >
-            Overview
-          </button>
-          <button 
-            onClick={() => setActiveTab('soil')}
-            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'soil' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
-          >
-            Soil Analysis
-          </button>
-          <button 
-            onClick={() => setActiveTab('weather')}
-            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'weather' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
-          >
-            Weather & Rainfall
-          </button>
-          <button 
-            onClick={() => setActiveTab('ai')}
-            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'ai' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
-          >
-            AI Recommendations
-          </button>
-          <button 
-            onClick={() => setActiveTab('agroforestry')}
-            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'agroforestry' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
-          >
-            Agroforestry
+            {t('overview')}
           </button>
           <button 
             onClick={() => setActiveTab('aiplanner')}
             className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'aiplanner' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
           >
-            AI Planner
+            {t('aiPlanner')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('agroforestry')}
+            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'agroforestry' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
+          >
+            {t('agroforestry')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('soil')}
+            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'soil' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
+          >
+            {t('soilAnalysis')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('weather')}
+            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'weather' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
+          >
+            {t('weatherRainfall')}
           </button>
           <button 
             onClick={() => setActiveTab('map')}
             className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'map' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
           >
-            Farm Map
+            {t('farmMap')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('predictions')}
+            className={`px-4 py-2 rounded-lg transition duration-300 ${activeTab === 'predictions' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-green-100'}`}
+          >
+            {t('predictions')}
           </button>
         </div>
       </div>
@@ -256,7 +295,7 @@ const Dashboard = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-sm">Farm Area</p>
+                    <p className="text-gray-500 text-sm">{t('farmArea')}</p>
                     <p className="text-xl font-semibold">2.5 acres</p>
                   </div>
                 </div>
@@ -270,7 +309,7 @@ const Dashboard = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-sm">Current Weather</p>
+                    <p className="text-gray-500 text-sm">{t('currentWeather')}</p>
                     <p className="text-xl font-semibold">
                       {weather ? `${weather.temp}°C` : 'Loading...'}
                     </p>
@@ -286,7 +325,7 @@ const Dashboard = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-sm">Investment Capacity</p>
+                    <p className="text-gray-500 text-sm">{t('investmentCapacity')}</p>
                     <p className="text-xl font-semibold">
                       {investmentCapacity ? investmentCapacity.category : 'Loading...'}
                     </p>
@@ -302,7 +341,7 @@ const Dashboard = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-sm">Expected Profit</p>
+                    <p className="text-gray-500 text-sm">{t('expectedProfit')}</p>
                     <p className="text-xl font-semibold">
                       {aiRecommendations ? '₹45,000/ha' : 'Loading...'}
                     </p>
@@ -313,7 +352,7 @@ const Dashboard = () => {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">AI-Powered Crop Recommendations</h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('aiCropRecommendations')}</h2>
                 {aiRecommendations ? (
                   <div className="space-y-4">
                     {aiRecommendations.cropRotation.map((recommendation, index) => (
@@ -329,24 +368,33 @@ const Dashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">Loading recommendations...</p>
+                  <p className="text-gray-500">{t('loadingRecommendations')}</p>
                 )}
               </div>
               
               <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('quickActions')}</h2>
                 <div className="space-y-3">
-                  <button className="w-full text-left p-3 rounded-lg bg-green-50 hover:bg-green-100 transition duration-300">
-                    <div className="font-medium text-green-800">Update Farm Profile</div>
-                    <div className="text-gray-600 text-sm">Edit your farm details</div>
+                  <button 
+                    onClick={() => setActiveTab('aiplanner')}
+                    className="w-full text-left p-3 rounded-lg bg-green-50 hover:bg-green-100 transition duration-300"
+                  >
+                    <div className="font-medium text-green-800">{t('generateAIPlan')}</div>
+                    <div className="text-gray-600 text-sm">{t('createLandUsePlan')}</div>
                   </button>
-                  <button className="w-full text-left p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition duration-300">
-                    <div className="font-medium text-blue-800">Generate New Plan</div>
-                    <div className="text-gray-600 text-sm">Create AI land-use plan</div>
+                  <button 
+                    onClick={() => setActiveTab('agroforestry')}
+                    className="w-full text-left p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition duration-300"
+                  >
+                    <div className="font-medium text-blue-800">{t('exploreAgroforestry')}</div>
+                    <div className="text-gray-600 text-sm">{t('multiCroppingSystems')}</div>
                   </button>
-                  <button className="w-full text-left p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition duration-300">
-                    <div className="font-medium text-purple-800">View Historical Data</div>
-                    <div className="text-gray-600 text-sm">Access past recommendations</div>
+                  <button 
+                    onClick={() => setActiveTab('predictions')}
+                    className="w-full text-left p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition duration-300"
+                  >
+                    <div className="font-medium text-purple-800">{t('viewPredictions')}</div>
+                    <div className="text-gray-600 text-sm">{t('realTimeCropPredictions')}</div>
                   </button>
                 </div>
               </div>
@@ -354,54 +402,64 @@ const Dashboard = () => {
           </div>
         )}
         
+        {/* AI Planner Tab */}
+        {activeTab === 'aiplanner' && (
+          <AIPlanner />
+        )}
+        
+        {/* Agroforestry Tab */}
+        {activeTab === 'agroforestry' && (
+          <AgroforestryPlanner />
+        )}
+        
         {/* Soil Analysis Tab */}
         {activeTab === 'soil' && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Soil Analysis Report</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">{t('soilAnalysisReport')}</h2>
             {soilData ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-4">Soil Properties</h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">{t('soilProperties')}</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">pH Level</span>
+                      <span className="text-gray-600">{t('phLevel')}</span>
                       <span className="font-medium">{soilData.pH}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">Texture</span>
+                      <span className="text-gray-600">{t('texture')}</span>
                       <span className="font-medium">{soilData.texture}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">Organic Carbon</span>
+                      <span className="text-gray-600">{t('organicCarbon')}</span>
                       <span className="font-medium">{soilData.organicCarbon}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">Bulk Density</span>
+                      <span className="text-gray-600">{t('bulkDensity')}</span>
                       <span className="font-medium">{soilData.bulkDensity}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-4">Nutrient Content</h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">{t('nutrientContent')}</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">Nitrogen (N)</span>
+                      <span className="text-gray-600">{t('nitrogen')}</span>
                       <span className="font-medium">{soilData.nitrogen}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">Phosphorus (P)</span>
+                      <span className="text-gray-600">{t('phosphorus')}</span>
                       <span className="font-medium">{soilData.phosphorus}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-600">Potassium (K)</span>
+                      <span className="text-gray-600">{t('potassium')}</span>
                       <span className="font-medium">{soilData.potassium}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="md:col-span-2 mt-6">
-                  <h3 className="text-lg font-medium text-gray-800 mb-4">AI Soil Management Recommendations</h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">{t('aiSoilManagement')}</h3>
                   {aiRecommendations ? (
                     <ul className="space-y-2">
                       {aiRecommendations.soilManagement.map((recommendation, index) => (
@@ -412,12 +470,12 @@ const Dashboard = () => {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-gray-500">Loading recommendations...</p>
+                    <p className="text-gray-500">{t('loadingRecommendations')}</p>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500">Loading soil data...</p>
+              <p className="text-gray-500">{t('loadingSoilData')}</p>
             )}
           </div>
         )}
@@ -426,69 +484,69 @@ const Dashboard = () => {
         {activeTab === 'weather' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">Current Weather Conditions</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">{t('currentWeatherConditions')}</h2>
               {weather ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-800">{weather.temp}°C</div>
-                    <div className="text-gray-600">Temperature</div>
+                    <div className="text-gray-600">{t('temperature')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-800">{weather.humidity}%</div>
-                    <div className="text-gray-600">Humidity</div>
+                    <div className="text-gray-600">{t('humidity')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-800">{weather.pressure} hPa</div>
-                    <div className="text-gray-600">Pressure</div>
+                    <div className="text-gray-600">{t('pressure')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-800">{weather.windSpeed} m/s</div>
-                    <div className="text-gray-600">Wind Speed</div>
+                    <div className="text-gray-600">{t('windSpeed')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-800 capitalize">{weather.description}</div>
-                    <div className="text-gray-600">Condition</div>
+                    <div className="text-gray-600">{t('condition')}</div>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500">Loading weather data...</p>
+                <p className="text-gray-500">{t('loadingWeatherData')}</p>
               )}
             </div>
             
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">Rainfall Analysis</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">{t('rainfallAnalysis')}</h2>
               {rainfallData ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-4">Annual Rainfall</h3>
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">{t('annualRainfall')}</h3>
                     <div className="text-3xl font-bold text-blue-600 mb-2">{rainfallData.annual}</div>
-                    <p className="text-gray-600">Based on historical data for your region</p>
+                    <p className="text-gray-600">{t('basedOnHistoricalData')}</p>
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-4">Seasonal Distribution</h3>
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">{t('seasonalDistribution')}</h3>
                     <p className="text-gray-700">{rainfallData.seasonal}</p>
                   </div>
                   
                   <div className="md:col-span-2 mt-4">
-                    <h3 className="text-lg font-medium text-gray-800 mb-4">Soil Wetness Index</h3>
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">{t('soilWetnessIndex')}</h3>
                     <div className="w-full bg-gray-200 rounded-full h-4">
                       <div className="bg-blue-600 h-4 rounded-full" style={{ width: '60%' }}></div>
                     </div>
                     <div className="flex justify-between mt-2">
-                      <span className="text-sm text-gray-600">Dry</span>
+                      <span className="text-sm text-gray-600">{t('dry')}</span>
                       <span className="text-sm font-medium text-gray-800">{rainfallData.soilWetness}</span>
-                      <span className="text-sm text-gray-600">Wet</span>
+                      <span className="text-sm text-gray-600">{t('wet')}</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500">Loading rainfall data...</p>
+                <p className="text-gray-500">{t('loadingRainfallData')}</p>
               )}
             </div>
             
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">AI Irrigation Recommendations</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">{t('aiIrrigationRecommendations')}</h2>
               {aiRecommendations ? (
                 <ul className="space-y-3">
                   {aiRecommendations.irrigation.map((recommendation, index) => (
@@ -499,105 +557,16 @@ const Dashboard = () => {
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500">Loading recommendations...</p>
+                <p className="text-gray-500">{t('loadingRecommendations')}</p>
               )}
             </div>
           </div>
-        )}
-        
-        {/* AI Recommendations Tab */}
-        {activeTab === 'ai' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">Personalized Crop Rotation Plan</h2>
-              {aiRecommendations ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Season</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recommended Crop</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {aiRecommendations.cropRotation.map((recommendation, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{recommendation.season}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{recommendation.crop}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {recommendation.reason}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-gray-500">Loading recommendations...</p>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Soil Management Practices</h2>
-                {aiRecommendations ? (
-                  <ul className="space-y-3">
-                    {aiRecommendations.soilManagement.map((recommendation, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-green-500 mr-2">✓</span>
-                        <span className="text-gray-700">{recommendation}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500">Loading recommendations...</p>
-                )}
-              </div>
-              
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Economic Forecast</h2>
-                {aiRecommendations ? (
-                  <div>
-                    <div className="mb-4">
-                      <h3 className="text-lg font-medium text-gray-800 mb-2">Expected Yield</h3>
-                      <p className="text-gray-700">{aiRecommendations.economicForecast.expectedYield}</p>
-                    </div>
-                    <div className="mb-4">
-                      <h3 className="text-lg font-medium text-gray-800 mb-2">Input Cost</h3>
-                      <p className="text-gray-700">{aiRecommendations.economicForecast.inputCost}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-800 mb-2">Expected Profit</h3>
-                      <p className="text-gray-700">{aiRecommendations.economicForecast.expectedProfit}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-500">Loading forecast...</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Agroforestry Tab */}
-        {activeTab === 'agroforestry' && (
-          <AgroforestryPlanner />
-        )}
-        
-        {/* AI Planner Tab */}
-        {activeTab === 'aiplanner' && (
-          <AIPlanner />
         )}
         
         {/* Farm Map Tab */}
         {activeTab === 'map' && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Farm Map</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t('farmMap')}</h2>
             <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
               <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={16}>
                 <Polygon
@@ -615,16 +584,287 @@ const Dashboard = () => {
             
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-green-50 rounded-lg p-4">
-                <h3 className="font-medium text-green-800 mb-2">Farm Area</h3>
+                <h3 className="font-medium text-green-800 mb-2">{t('farmArea')}</h3>
                 <p className="text-2xl font-bold">2.5 acres</p>
               </div>
               <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="font-medium text-blue-800 mb-2">GPS Coordinates</h3>
+                <h3 className="font-medium text-blue-800 mb-2">{t('gpsCoordinates')}</h3>
                 <p className="text-lg font-bold">{center.lat.toFixed(4)}, {center.lng.toFixed(4)}</p>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
-                <h3 className="font-medium text-purple-800 mb-2">Boundary Status</h3>
-                <p className="text-lg font-bold text-green-600">Verified</p>
+                <h3 className="font-medium text-purple-800 mb-2">{t('boundaryStatus')}</h3>
+                <p className="text-lg font-bold text-green-600">{t('verified')}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Predictions Tab */}
+        {activeTab === 'predictions' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">🌾 {t('realTimePredictions')}</h2>
+              
+              {realTimePredictions ? (
+                <div className="space-y-6">
+                  {/* Recommended Crops */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-800 mb-3">🌾 {t('recommendedCrops')}</h3>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="bg-green-100 rounded-lg p-4 text-center flex-1 min-w-[200px]">
+                        <div className="text-2xl font-bold text-green-800">
+                          {realTimePredictions.recommendations?.best_crop || 'Maize'}
+                        </div>
+                        <div className="text-gray-600">{t('bestCropForConditions')}</div>
+                      </div>
+                      <div className="bg-blue-100 rounded-lg p-4 text-center flex-1 min-w-[200px]">
+                        <div className="text-2xl font-bold text-blue-800">Cowpea</div>
+                        <div className="text-gray-600">{t('nitrogenFixingCrop')}</div>
+                      </div>
+                      <div className="bg-purple-100 rounded-lg p-4 text-center flex-1 min-w-[200px]">
+                        <div className="text-2xl font-bold text-purple-800">Turmeric</div>
+                        <div className="text-gray-600">{t('highValueCrop')}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Predicted Yield */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-800 mb-3">📊 {t('predictedYield')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-blue-800">
+                          {realTimePredictions.predictions?.yield_kg_per_acre?.toLocaleString() || '3,000'} kg/acre
+                        </div>
+                        <div className="text-gray-600">{t('estimatedYieldPerAcre')}</div>
+                        <div className="mt-2 text-sm text-gray-500">
+                          {t('confidence')}: {(realTimePredictions.predictions?.confidence * 100 || 85).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-green-800">₹1,20,000</div>
+                        <div className="text-gray-600">{t('estimatedRevenue')}</div>
+                        <div className="mt-2 text-sm text-gray-500">{t('basedOnCurrentPrices')}</div>
+                      </div>
+                      <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-yellow-800">
+                          {realTimePredictions.predictions?.yield_kg_per_acre > 3000 ? 'High' : 
+                           realTimePredictions.predictions?.yield_kg_per_acre > 2000 ? 'Medium' : 'Low'}
+                        </div>
+                        <div className="text-gray-600">{t('yieldPotential')}</div>
+                        <div className="mt-2 text-sm text-gray-500">{t('basedOnEnvironmentalConditions')}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* ROI and Cost-Benefit */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-800 mb-3">💰 {t('roiAndCostBenefit')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-green-800">
+                          {realTimePredictions.predictions?.roi?.toFixed(1) || '2.8'}x
+                        </div>
+                        <div className="text-gray-600">{t('returnOnInvestment')}</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-800">₹50,000</div>
+                        <div className="text-gray-600">{t('estimatedInvestment')}</div>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-800">₹1,20,000</div>
+                        <div className="text-gray-600">{t('estimatedIncome')}</div>
+                      </div>
+                      <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-yellow-800">18 {t('months')}</div>
+                        <div className="text-gray-600">{t('paybackPeriod')}</div>
+                      </div>
+                    </div>
+                    
+                    {/* Cost-Benefit Analysis */}
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <h4 className="font-medium text-gray-800 mb-2">{t('costBreakdown')}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-white border border-gray-200 rounded p-3">
+                          <div className="font-medium text-gray-800">{t('seedsAndSaplings')}</div>
+                          <div className="text-green-700 font-bold">₹8,000</div>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded p-3">
+                          <div className="font-medium text-gray-800">{t('fertilizers')}</div>
+                          <div className="text-green-700 font-bold">₹12,000</div>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded p-3">
+                          <div className="font-medium text-gray-800">{t('labor')}</div>
+                          <div className="text-green-700 font-bold">₹15,000</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Weather Conditions */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-800 mb-3">🌤️ {t('currentWeatherConditions')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 rounded-lg p-3 text-center">
+                        <div className="text-xl font-bold text-blue-800">
+                          {realTimePredictions.weather_data?.avg_temperature_c || 28}°C
+                        </div>
+                        <div className="text-gray-600">{t('temperature')}</div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-3 text-center">
+                        <div className="text-xl font-bold text-green-800">
+                          {realTimePredictions.weather_data?.avg_humidity || 65}%
+                        </div>
+                        <div className="text-gray-600">{t('humidity')}</div>
+                      </div>
+                      <div className="bg-yellow-50 rounded-lg p-3 text-center">
+                        <div className="text-xl font-bold text-yellow-800">
+                          {realTimePredictions.weather_data?.avg_rainfall_mm?.toLocaleString() || '980'} mm
+                        </div>
+                        <div className="text-gray-600">{t('annualRainfall')}</div>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-3 text-center">
+                        <div className="text-xl font-bold text-purple-800">
+                          {realTimePredictions.weather_data?.solar_radiation || 5.5} kWh/m²
+                        </div>
+                        <div className="text-gray-600">{t('solarRadiation')}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Recommendations */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-800 mb-3">✅ {t('recommendations')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-gray-800 mb-2">{t('plantingRecommendations')}</h4>
+                        <ul className="space-y-2">
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span className="text-gray-700">{t('plantingTime')}: {realTimePredictions.recommendations?.planting_time || 'June-July'}</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span className="text-gray-700">{t('irrigationNeeds')}: {realTimePredictions.recommendations?.irrigation_needs || 'Moderate'}</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span className="text-gray-700">{t('soilPreparation')}: Add organic compost before planting</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-800 mb-2">{t('harvestingTips')}</h4>
+                        <ul className="space-y-2">
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span className="text-gray-700">{t('monitorCropHealth')}: Regularly check for pests and diseases</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span className="text-gray-700">{t('optimalHarvestTime')}: Harvest when grains are fully mature</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span className="text-gray-700">{t('postHarvestHandling')}: Dry grains properly to prevent spoilage</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mb-4"></div>
+                  <p className="text-gray-600">{t('loadingPredictions')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Real-time Predictions Section */}
+        {realTimePredictions && (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">
+                📊 {t('realTimePredictions')}
+              </h2>
+              {currentPredictionId && (
+                <button
+                  onClick={() => setShowFeedbackForm(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition duration-300"
+                >
+                  {t('provideFeedback')}
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-green-50 rounded-lg p-4 text-center">
+                <p className="text-gray-600">{t('predictedYield')}</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {realTimePredictions.predictions.yield_kg_per_acre} kg/acre
+                </p>
+                <p className="text-sm text-gray-500">
+                  {t('confidence')}: {(realTimePredictions.predictions.confidence * 100).toFixed(0)}%
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <p className="text-gray-600">{t('predictedROI')}</p>
+                <p className="text-2xl font-bold text-blue-700">
+                  {realTimePredictions.predictions.roi}x
+                </p>
+                <p className="text-sm text-gray-500">
+                  {t('returnOnInvestment')}
+                </p>
+              </div>
+              
+              <div className="bg-purple-50 rounded-lg p-4 text-center">
+                <p className="text-gray-600">{t('recommendedCrop')}</p>
+                <p className="text-2xl font-bold text-purple-700">
+                  {realTimePredictions.recommendations.best_crop}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {realTimePredictions.recommendations.planting_time}
+                </p>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-4">
+              <h3 className="font-medium text-gray-800 mb-2">{t('recommendations')}</h3>
+              <ul className="list-disc list-inside space-y-1 text-gray-700">
+                <li>{t('bestCrop')}: {realTimePredictions.recommendations.best_crop}</li>
+                <li>{t('plantingTime')}: {realTimePredictions.recommendations.planting_time}</li>
+                <li>{t('irrigationNeeds')}: {realTimePredictions.recommendations.irrigation_needs}</li>
+              </ul>
+            </div>
+          </div>
+        )}
+        
+        {/* Feedback Form Modal */}
+        {showFeedbackForm && currentPredictionId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {t('provideFeedback')}
+                </h3>
+                <button
+                  onClick={() => setShowFeedbackForm(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6">
+                <FeedbackForm 
+                  predictionId={currentPredictionId} 
+                  onClose={() => setShowFeedbackForm(false)} 
+                />
               </div>
             </div>
           </div>
@@ -632,18 +872,18 @@ const Dashboard = () => {
         
         {/* Recent Activity Section (Visible on all tabs) */}
         <div className="bg-white rounded-xl shadow-md p-6 mt-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('recentActivity')}</h2>
           <div className="space-y-4">
             <div className="border-b border-gray-100 pb-4">
-              <h3 className="font-medium text-gray-800">New AI Plan Generated</h3>
+              <h3 className="font-medium text-gray-800">{t('newAIPlanGenerated')}</h3>
               <p className="text-gray-600 text-sm">2 hours ago</p>
             </div>
             <div className="border-b border-gray-100 pb-4">
-              <h3 className="font-medium text-gray-800">Soil Data Updated</h3>
+              <h3 className="font-medium text-gray-800">{t('soilDataUpdated')}</h3>
               <p className="text-gray-600 text-sm">1 day ago</p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-800">Farm Profile Created</h3>
+              <h3 className="font-medium text-gray-800">{t('farmProfileCreated')}</h3>
               <p className="text-gray-600 text-sm">3 days ago</p>
             </div>
           </div>

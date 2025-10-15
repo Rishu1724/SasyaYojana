@@ -1,97 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import agroIntelService from '../services/agroIntelService';
+import FarmerInputForm from './FarmerInputForm';
 
 const AIPlanner = () => {
-  const { t, i18n } = useTranslation();
-  const [farmData, setFarmData] = useState({
-    latitude: '',
-    longitude: '',
-    land_area: '',
-    investment_capacity: 'medium'
-  });
-  const [soilData, setSoilData] = useState(null);
-  const [weatherData, setWeatherData] = useState(null);
+  const { t } = useTranslation();
   const [agroPlan, setAgroPlan] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [planInputs, setPlanInputs] = useState(null);
 
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFarmData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Handle plan generation from FarmerInputForm
+  const handlePlanGenerated = (plan, inputs) => {
+    setAgroPlan(plan);
+    setPlanInputs(inputs);
   };
 
-  // Fetch data and generate plan
-  const generatePlan = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Validate inputs
-      if (!farmData.latitude || !farmData.longitude) {
-        throw new Error('Please enter valid coordinates');
-      }
-      
-      const lat = parseFloat(farmData.latitude);
-      const lon = parseFloat(farmData.longitude);
-      
-      if (isNaN(lat) || isNaN(lon)) {
-        throw new Error('Please enter valid numeric coordinates');
-      }
-      
-      // Fetch soil data
-      const soil = await agroIntelService.fetchSoilData(lat, lon);
-      setSoilData(soil);
-      
-      // Fetch weather data
-      const weather = await agroIntelService.fetchWeatherData(lat, lon);
-      setWeatherData(weather);
-      
-      // Generate agroforestry plan
-      const inputs = {
-        latitude: lat,
-        longitude: lon,
-        soil_pH: soil.ph,
-        organic_carbon: soil.organic_carbon,
-        nitrogen: soil.nitrogen,
-        cec: soil.cec,
-        sand: soil.sand,
-        silt: soil.silt,
-        clay: soil.clay,
-        avg_rainfall_mm: weather.avg_rainfall_mm,
-        avg_temperature_c: weather.avg_temperature_c,
-        solar_radiation: weather.solar_radiation,
-        land_area: farmData.land_area,
-        investment_capacity: farmData.investment_capacity
-      };
-      
-      const plan = await agroIntelService.generateAgroforestryPlan(inputs);
-      setAgroPlan(plan);
-    } catch (err) {
-      console.error('Error generating plan:', err);
-      setError(err.message || 'Failed to generate plan. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Reset form
+  // Reset form to collect new input
   const resetForm = () => {
-    setFarmData({
-      latitude: '',
-      longitude: '',
-      land_area: '',
-      investment_capacity: 'medium'
-    });
-    setSoilData(null);
-    setWeatherData(null);
     setAgroPlan(null);
-    setError(null);
+    setPlanInputs(null);
   };
 
   return (
@@ -101,98 +26,32 @@ const AIPlanner = () => {
       </h2>
       
       {!agroPlan ? (
-        <form onSubmit={generatePlan} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg">
-              {error}
-            </div>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">
-                {t('latitude')}
-              </label>
-              <input
-                type="text"
-                name="latitude"
-                value={farmData.latitude}
-                onChange={handleInputChange}
-                placeholder="e.g., 15.8221"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">
-                {t('longitude')}
-              </label>
-              <input
-                type="text"
-                name="longitude"
-                value={farmData.longitude}
-                onChange={handleInputChange}
-                placeholder="e.g., 75.0302"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">
-                {t('landAreaInAcres')}
-              </label>
-              <input
-                type="number"
-                name="land_area"
-                value={farmData.land_area}
-                onChange={handleInputChange}
-                placeholder="e.g., 2.5"
-                step="0.1"
-                min="0.1"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">
-                {t('investmentCapacity')}
-              </label>
-              <select
-                name="investment_capacity"
-                value={farmData.investment_capacity}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="low">{t('lowBudget')}</option>
-                <option value="medium">{t('mediumBudget')}</option>
-                <option value="high">{t('highBudget')}</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={loading}
-              className={`bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
-            >
-              {loading ? t('generatingPlan') : t('generateAgroforestryPlan')}
-            </button>
-            
-            <button
-              type="button"
-              onClick={resetForm}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300"
-            >
-              {t('reset')}
-            </button>
-          </div>
-        </form>
+        <FarmerInputForm onPlanGenerated={handlePlanGenerated} />
       ) : (
         <div className="space-y-6">
+          {/* Farm Inputs Summary */}
+          <div className="border border-gray-200 rounded-lg p-4 bg-green-50">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">📋 {t('farmInputsSummary')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <span className="text-gray-600">{t('latitude')}:</span>
+                <span className="ml-2 font-medium">{planInputs.latitude}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">{t('longitude')}:</span>
+                <span className="ml-2 font-medium">{planInputs.longitude}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">{t('landAreaInAcres')}:</span>
+                <span className="ml-2 font-medium">{planInputs.land_area} acres</span>
+              </div>
+              <div>
+                <span className="text-gray-600">{t('budget')}:</span>
+                <span className="ml-2 font-medium">₹{planInputs.investment_capacity === 'low' ? '0-50,000' : planInputs.investment_capacity === 'medium' ? '50,000-1,00,000' : '1,00,000+'}</span>
+              </div>
+            </div>
+          </div>
+          
           {/* Farm Location */}
           <div className="border border-gray-200 rounded-lg p-4">
             <h3 className="text-lg font-medium text-gray-800 mb-3">📍 {t('farmLocation')}</h3>
