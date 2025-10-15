@@ -13,6 +13,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [showLanguageSelection, setShowLanguageSelection] = useState(true);
 
   // Check auth state on app load
   useEffect(() => {
@@ -27,6 +28,7 @@ function App() {
 
   const switchToLogin = () => setAuthMode('login');
   const switchToSignup = () => setAuthMode('signup');
+  const handleLanguageSelected = () => setShowLanguageSelection(false);
 
   if (loading) {
     return (
@@ -42,6 +44,48 @@ function App() {
   // If user is authenticated, show dashboard
   if (user) {
     return <Dashboard />;
+  }
+
+  // Show language selection first
+  if (showLanguageSelection) {
+    return (
+      <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center p-4">
+        <header className="w-full max-w-4xl mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-green-800 mb-2">
+            Sasya-Mitra (सस्य-मित्र)
+          </h1>
+          <p className="text-lg text-green-600">
+            {t('tagline')}
+          </p>
+        </header>
+        
+        <main className="w-full max-w-2xl bg-white rounded-xl shadow-md p-6 md:p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('welcome')}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your trusted companion for sustainable farming practices and land-use planning.
+            </p>
+          </div>
+          
+          <LanguageSelector />
+          
+          <div className="mt-8 text-center">
+            <button 
+              onClick={handleLanguageSelected}
+              className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-8 rounded-lg transition duration-300"
+            >
+              {t('continue')}
+            </button>
+          </div>
+        </main>
+        
+        <footer className="mt-8 text-center text-gray-500 text-sm">
+          <p>{t('footer')}</p>
+        </footer>
+      </div>
+    );
   }
 
   return (
