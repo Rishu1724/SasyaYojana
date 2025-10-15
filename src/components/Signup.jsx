@@ -17,13 +17,13 @@ const Signup = ({ onSwitchToLogin }) => {
     setError('');
     
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError(t('passwordsDontMatch') || "Passwords don't match");
       setLoading(false);
       return;
     }
     
     if (password.length < 6) {
-      setError("Password should be at least 6 characters");
+      setError(t('passwordTooShort') || "Password should be at least 6 characters");
       setLoading(false);
       return;
     }
@@ -38,16 +38,16 @@ const Signup = ({ onSwitchToLogin }) => {
       
       switch (err.code) {
         case 'auth/email-already-in-use':
-          errorMessage = 'Email already in use';
+          errorMessage = t('emailInUse') || 'Email already in use';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          errorMessage = t('invalidEmail') || 'Invalid email address';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password is too weak';
+          errorMessage = t('weakPassword') || 'Password is too weak';
           break;
         default:
-          errorMessage = 'Failed to create account. Please try again.';
+          errorMessage = t('signupFailed') || 'Failed to create account. Please try again.';
       }
       
       setError(errorMessage);
@@ -71,7 +71,7 @@ const Signup = ({ onSwitchToLogin }) => {
       <form onSubmit={handleSignup}>
         <div className="mb-4">
           <label htmlFor="email" className="block text-gray-700 mb-2">
-            Email
+            {t('email')}
           </label>
           <input
             type="email"
@@ -86,7 +86,7 @@ const Signup = ({ onSwitchToLogin }) => {
         
         <div className="mb-4">
           <label htmlFor="password" className="block text-gray-700 mb-2">
-            Password
+            {t('password')}
           </label>
           <input
             type="password"
@@ -101,7 +101,7 @@ const Signup = ({ onSwitchToLogin }) => {
         
         <div className="mb-6">
           <label htmlFor="confirmPassword" className="block text-gray-700 mb-2">
-            Confirm Password
+            {t('confirmPassword')}
           </label>
           <input
             type="password"
@@ -119,13 +119,13 @@ const Signup = ({ onSwitchToLogin }) => {
           className={`w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
           disabled={loading}
         >
-          {loading ? 'Creating account...' : t('signup')}
+          {loading ? t('creatingAccount') || 'Creating account...' : t('signup')}
         </button>
       </form>
       
       <div className="mt-6 text-center">
         <p className="text-gray-600">
-          Already have an account?{' '}
+          {t('alreadyHaveAccount')}{' '}
           <button
             onClick={onSwitchToLogin}
             className="text-green-600 hover:text-green-700 font-medium"

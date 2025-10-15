@@ -204,9 +204,9 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-green-800">
-              Sasya-Mitra Dashboard
+              {t('dashboard')}
             </h1>
-            <p className="text-green-600">AI-Powered Agricultural Advisory System</p>
+            <p className="text-green-600">{t('aiDrivenAgriculturalAssistant')}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex flex-wrap gap-1">
@@ -496,15 +496,15 @@ const Dashboard = () => {
                     <div className="text-gray-600">{t('humidity')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-800">{weather.pressure} hPa</div>
+                    <div className="text-2xl font-bold text-blue-800">{weather.pressure} {t('pressureUnit')}</div>
                     <div className="text-gray-600">{t('pressure')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-800">{weather.windSpeed} m/s</div>
+                    <div className="text-2xl font-bold text-blue-800">{weather.windSpeed} {t('windSpeedUnit')}</div>
                     <div className="text-gray-600">{t('windSpeed')}</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-800 capitalize">{weather.description}</div>
+                    <div className="text-2xl font-bold text-blue-800 capitalize">{t(weather.description) || weather.description}</div>
                     <div className="text-gray-600">{t('condition')}</div>
                   </div>
                 </div>
@@ -618,11 +618,11 @@ const Dashboard = () => {
                         <div className="text-gray-600">{t('bestCropForConditions')}</div>
                       </div>
                       <div className="bg-blue-100 rounded-lg p-4 text-center flex-1 min-w-[200px]">
-                        <div className="text-2xl font-bold text-blue-800">Cowpea</div>
+                        <div className="text-2xl font-bold text-blue-800">{t('cowpea')}</div>
                         <div className="text-gray-600">{t('nitrogenFixingCrop')}</div>
                       </div>
                       <div className="bg-purple-100 rounded-lg p-4 text-center flex-1 min-w-[200px]">
-                        <div className="text-2xl font-bold text-purple-800">Turmeric</div>
+                        <div className="text-2xl font-bold text-purple-800">{t('turmeric')}</div>
                         <div className="text-gray-600">{t('highValueCrop')}</div>
                       </div>
                     </div>
@@ -648,8 +648,8 @@ const Dashboard = () => {
                       </div>
                       <div className="bg-yellow-50 rounded-lg p-4 text-center">
                         <div className="text-3xl font-bold text-yellow-800">
-                          {realTimePredictions.predictions?.yield_kg_per_acre > 3000 ? 'High' : 
-                           realTimePredictions.predictions?.yield_kg_per_acre > 2000 ? 'Medium' : 'Low'}
+                          {realTimePredictions.predictions?.yield_kg_per_acre > 3000 ? t('high') : 
+                           realTimePredictions.predictions?.yield_kg_per_acre > 2000 ? t('medium') : t('low')}
                         </div>
                         <div className="text-gray-600">{t('yieldPotential')}</div>
                         <div className="mt-2 text-sm text-gray-500">{t('basedOnEnvironmentalConditions')}</div>
@@ -687,15 +687,15 @@ const Dashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="bg-white border border-gray-200 rounded p-3">
                           <div className="font-medium text-gray-800">{t('seedsAndSaplings')}</div>
-                          <div className="text-green-700 font-bold">₹8,000</div>
+                          <div className="text-green-700 font-bold">{t('currencySymbol')}8,000</div>
                         </div>
                         <div className="bg-white border border-gray-200 rounded p-3">
                           <div className="font-medium text-gray-800">{t('fertilizers')}</div>
-                          <div className="text-green-700 font-bold">₹12,000</div>
+                          <div className="text-green-700 font-bold">{t('currencySymbol')}12,000</div>
                         </div>
                         <div className="bg-white border border-gray-200 rounded p-3">
                           <div className="font-medium text-gray-800">{t('labor')}</div>
-                          <div className="text-green-700 font-bold">₹15,000</div>
+                          <div className="text-green-700 font-bold">{t('currencySymbol')}15,000</div>
                         </div>
                       </div>
                     </div>
@@ -749,7 +749,7 @@ const Dashboard = () => {
                           </li>
                           <li className="flex items-start">
                             <span className="text-green-500 mr-2">✓</span>
-                            <span className="text-gray-700">{t('soilPreparation')}: Add organic compost before planting</span>
+                            <span className="text-gray-700">{t('soilPreparation')}: {t('addOrganicCompost')}</span>
                           </li>
                         </ul>
                       </div>
@@ -758,15 +758,15 @@ const Dashboard = () => {
                         <ul className="space-y-2">
                           <li className="flex items-start">
                             <span className="text-green-500 mr-2">✓</span>
-                            <span className="text-gray-700">{t('monitorCropHealth')}: Regularly check for pests and diseases</span>
+                            <span className="text-gray-700">{t('monitorCropHealth')}: {t('checkPestsDiseases')}</span>
                           </li>
                           <li className="flex items-start">
                             <span className="text-green-500 mr-2">✓</span>
-                            <span className="text-gray-700">{t('optimalHarvestTime')}: Harvest when grains are fully mature</span>
+                            <span className="text-gray-700">{t('optimalHarvestTime')}: {t('harvestWhenMature')}</span>
                           </li>
                           <li className="flex items-start">
                             <span className="text-green-500 mr-2">✓</span>
-                            <span className="text-gray-700">{t('postHarvestHandling')}: Dry grains properly to prevent spoilage</span>
+                            <span className="text-gray-700">{t('postHarvestHandling')}: {t('dryGrainsProperly')}</span>
                           </li>
                         </ul>
                       </div>

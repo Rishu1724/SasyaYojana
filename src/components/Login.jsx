@@ -25,19 +25,19 @@ const Login = ({ onSwitchToSignup }) => {
       
       switch (err.code) {
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          errorMessage = t('invalidEmail') || 'Invalid email address';
           break;
         case 'auth/user-disabled':
-          errorMessage = 'User account has been disabled';
+          errorMessage = t('userDisabled') || 'User account has been disabled';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'No user found with this email';
+          errorMessage = t('userNotFound') || 'No user found with this email';
           break;
         case 'auth/wrong-password':
-          errorMessage = 'Incorrect password';
+          errorMessage = t('wrongPassword') || 'Incorrect password';
           break;
         default:
-          errorMessage = 'Failed to login. Please try again.';
+          errorMessage = t('loginFailed') || 'Failed to login. Please try again.';
       }
       
       setError(errorMessage);
@@ -61,7 +61,7 @@ const Login = ({ onSwitchToSignup }) => {
       <form onSubmit={handleLogin}>
         <div className="mb-4">
           <label htmlFor="email" className="block text-gray-700 mb-2">
-            Email
+            {t('email')}
           </label>
           <input
             type="email"
@@ -76,7 +76,7 @@ const Login = ({ onSwitchToSignup }) => {
         
         <div className="mb-6">
           <label htmlFor="password" className="block text-gray-700 mb-2">
-            Password
+            {t('password')}
           </label>
           <input
             type="password"
@@ -94,13 +94,13 @@ const Login = ({ onSwitchToSignup }) => {
           className={`w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
           disabled={loading}
         >
-          {loading ? 'Logging in...' : t('login')}
+          {loading ? t('loggingIn') || 'Logging in...' : t('login')}
         </button>
       </form>
       
       <div className="mt-6 text-center">
         <p className="text-gray-600">
-          Don't have an account?{' '}
+          {t('noAccount')}{' '}
           <button
             onClick={onSwitchToSignup}
             className="text-green-600 hover:text-green-700 font-medium"

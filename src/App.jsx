@@ -30,21 +30,6 @@ function App() {
   const switchToSignup = () => setAuthMode('signup');
   const handleLanguageSelected = () => setShowLanguageSelection(false);
 
-  // Automatically proceed after language is selected (no need to click continue)
-  useEffect(() => {
-    // If language is already set and we're still showing language selection, proceed
-    if (!showLanguageSelection) return;
-    
-    // Check if a language has already been selected
-    if (i18n.language && i18n.language !== 'en') {
-      const timer = setTimeout(() => {
-        setShowLanguageSelection(false);
-      }, 1000); // Automatically proceed after 1 second
-      
-      return () => clearTimeout(timer);
-    }
-  }, [i18n.language, showLanguageSelection]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-green-50 flex items-center justify-center">
@@ -63,7 +48,7 @@ function App() {
 
   // Show language selection first
   if (showLanguageSelection) {
-    return <LanguageSelector />;
+    return <LanguageSelector onLanguageSelected={handleLanguageSelected} />;
   }
 
   return (
@@ -77,8 +62,8 @@ function App() {
         </p>
         {/* Notification about dataset integration */}
         <div className="mt-4 p-3 bg-blue-100 rounded-lg text-blue-800 text-sm">
-          <p>ℹ️ Your agricultural datasets have been successfully integrated!</p>
-          <p className="mt-1">AI models will use your data for personalized recommendations.</p>
+          <p>ℹ️ {t('datasetsIntegrated')}</p>
+          <p className="mt-1">{t('aiModelsPersonalized')}</p>
         </div>
       </header>
       
