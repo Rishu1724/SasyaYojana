@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -10,10 +10,10 @@ const mapContainerStyle = {
   height: '400px'
 };
 
-// Example center of map (India)
-const center = { lat: 20.5937, lng: 78.9629 };
+// Default center (fallback if geolocation fails)
+const defaultCenter = { lat: 20.5937, lng: 78.9629 };
 
-// Example farm polygon (replace with dynamic farmer input)
+// Example farm polygon (replace with dynamic farmer input later)
 const farmPolygon = [
   { lat: 20.60, lng: 78.95 },
   { lat: 20.61, lng: 78.95 },
@@ -23,6 +23,24 @@ const farmPolygon = [
 
 const Dashboard = () => {
   const { t } = useTranslation();
+  const [center, setCenter] = useState(defaultCenter);
+
+  // Get user location using browser geolocation
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -98,20 +116,19 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Farm Map</h2>
           <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-  <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={6}>
-    <Polygon
-      paths={farmPolygon}
-      options={{
-        fillColor: '#34D399',
-        fillOpacity: 0.3,
-        strokeColor: '#059669',
-        strokeWeight: 2
-      }}
-    />
-    <Marker position={{ lat: 20.605, lng: 78.955 }} />
-    <Marker position={{ lat: 20.607, lng: 78.965 }} />
-  </GoogleMap>
-</LoadScript>     
+            <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={16}>
+              <Polygon
+                paths={farmPolygon}
+                options={{
+                  fillColor: '#34D399',
+                  fillOpacity: 0.3,
+                  strokeColor: '#059669',
+                  strokeWeight: 2
+                }}
+              />
+              <Marker position={center} />
+            </GoogleMap>
+          </LoadScript>
         </div>
       </main>
     </div>
