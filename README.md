@@ -9,6 +9,7 @@ Sasya-Mitra is an advanced agricultural AI system that helps farmers make inform
 - ☀️ **Weather Integration**: Uses NASA POWER API for accurate climate data
 - 🤖 **AI-Powered Recommendations**: Machine learning models for crop yield and ROI prediction
 - 🌳 **Agroforestry Planning**: Comprehensive agroforestry system design
+- 🗺️ **Interactive Land Layout Maps**: Visualizes crop layout recommendations with real-time updates
 - 💰 **Economic Projections**: Investment analysis and return on investment calculations
 - ♻️ **Sustainability Metrics**: Environmental impact assessment
 - 🌐 **Multi-language Support**: Available in English, Hindi, Marathi, Telugu, and Kannada
@@ -137,6 +138,7 @@ sasya-mitra/
 │   ├── preprocessing/    # Data preprocessing utilities
 │   ├── training/         # Model training implementations
 │   ├── recommendation/   # Recommendation engine
+│   ├── map_visualization/ # Interactive map generation
 │   └── api/             # Flask API for model serving
 ├── src/                  # Frontend source code
 │   ├── components/       # React components
@@ -155,6 +157,7 @@ sasya-mitra/
 - **Data Sources**: NASA POWER API, ISRIC SoilGrids API, OpenWeatherMap API
 - **Database**: Firebase Firestore
 - **Authentication**: Firebase Authentication
+- **Mapping**: Folium, GeoPandas for interactive land layout visualization
 - **Deployment**: Vite, Firebase Hosting (optional)
 
 ## Contributing
