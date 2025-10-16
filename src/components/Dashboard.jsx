@@ -8,6 +8,7 @@ import AgroforestryPlanner from './AgroforestryPlanner';
 import AIPlanner from './AIPlanner';
 import agroIntelService from '../services/agroIntelService';
 import FeedbackForm from './FeedbackForm';
+import mapStorageService from '../services/mapStorageService';
 
 // Map container style
 const mapContainerStyle = {
@@ -38,6 +39,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [currentPredictionId, setCurrentPredictionId] = useState(null);
+  const [mapId, setMapId] = useState(null);
 
   // Get user location using browser geolocation
   useEffect(() => {
@@ -286,10 +288,40 @@ const Dashboard = () => {
       
       if (response.data.success) {
         console.log('Land layout map generated successfully');
+        
+        // Store map data in Firebase
+        try {
+          const mapStorageData = {
+            center_lat: mapData.center_lat,
+            center_lon: mapData.center_lon,
+            land_area_acres: mapData.land_area_acres,
+            location: mapData.location,
+            soil_data: mapData.soil_data,
+            weather_data: mapData.weather_data,
+            economic_data: mapData.economic_data,
+            recommendation: response.data.recommendation,
+            created_at: new Date(),
+            user_id: auth.currentUser ? auth.currentUser.uid : null
+          };
+          
+          // Store in Firebase
+          const storedMap = await mapStorageService.storeMap(mapStorageData, response.data.map_file_path);
+          setMapId(storedMap.id);
+          console.log('Map stored in Firebase with ID:', storedMap.id);
+        } catch (storageError) {
+          console.error('Error storing map in Firebase:', storageError);
+        }
+        
         // Refresh the iframe to show the new map
         const iframe = document.querySelector('iframe[title="AI Land Layout Map"]');
         if (iframe) {
-          iframe.src = iframe.src;
+          // Use the map URL from the response if available, otherwise refresh the iframe
+          if (response.data.map_url) {
+            iframe.src = response.data.map_url;
+          } else {
+            // Fallback to local file
+            iframe.src = `/api/get-map/${encodeURIComponent(response.data.map_file_path.split('/').pop())}`;
+          }
         }
       } else {
         console.error('Failed to generate land layout map:', response.data.message);
@@ -392,7 +424,7 @@ const Dashboard = () => {
                 <div className="flex items-center">
                   <div className="p-3 bg-green-100 rounded-lg mr-4">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
@@ -702,44 +734,48 @@ const Dashboard = () => {
             <div className="mt-8">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">{t('aiGeneratedLandLayout')}</h3>
               <div className="bg-gray-100 rounded-lg p-4">
-                <div className="w-full h-96 rounded-lg border-0 bg-white flex items-center justify-center">
-                  <div className="text-center p-4">
-                    <div className="text-gray-500 mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                      <p className="mt-2">{t('mapVisualizationNotAvailable')}</p>
+                <iframe 
+                  src="/api/latest-map" 
+                  title="AI Land Layout Map" 
+                  className="w-full h-96 rounded-lg border-0"
+                  sandbox="allow-scripts allow-same-origin"
+                ></iframe>
+                <div className="mt-4 flex justify-center">
+                  <button 
+                    onClick={generateLandLayoutMap}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-300 flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                    </svg>
+                    {t('refreshLandLayout')}
+                  </button>
+                </div>
+                
+                {/* Legend for land use types */}
+                <div className="mt-6 bg-gray-50 rounded-lg p-4 inline-block">
+                  <h4 className="font-medium text-gray-800 mb-2">{t('landUseLegend')}</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-green-500 mr-2"></div>
+                      <span className="text-sm">{t('mainCropArea')} (60%)</span>
                     </div>
-                    <button 
-                      onClick={generateLandLayoutMap}
-                      className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-300 flex items-center mx-auto"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                      </svg>
-                      {t('generateLandLayout')}
-                    </button>
-                    
-                    {/* Legend for land use types */}
-                    <div className="mt-6 bg-gray-50 rounded-lg p-4 inline-block">
-                      <h4 className="font-medium text-gray-800 mb-2">{t('landUseLegend')}</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-green-500 mr-2"></div>
-                          <span className="text-sm">{t('mainCropArea')} (60%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-yellow-500 mr-2"></div>
-                          <span className="text-sm">{t('intercropArea')} (25%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-green-800 mr-2"></div>
-                          <span className="text-sm">{t('treesArea')} (15%)</span>
-                        </div>
-                      </div>
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-yellow-500 mr-2"></div>
+                      <span className="text-sm">{t('intercropArea')} (25%)</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-green-800 mr-2"></div>
+                      <span className="text-sm">{t('treesArea')} (15%)</span>
                     </div>
                   </div>
                 </div>
+                
+                {mapId && (
+                  <div className="mt-4 text-center text-sm text-green-600">
+                    {t('mapStoredInFirebase')} ID: {mapId}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -17,6 +17,20 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from recommendation.engine import AgriRecommendationEngine, SoilData, WeatherData, EconomicData
 
+# Initialize Firebase availability flag
+FIREBASE_AVAILABLE = False
+db = None
+bucket = None
+
+# Try to import Firebase Admin SDK
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore, storage
+    from datetime import datetime
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    print("Firebase Admin SDK not available. Map data will not be stored in Firebase.")
+
 class LandLayoutMapper:
     """
     Generates interactive land layout maps based on AI recommendations.
@@ -26,6 +40,31 @@ class LandLayoutMapper:
         self.engine = AgriRecommendationEngine()
         self.output_dir = "models/map_visualization/generated_maps"
         os.makedirs(self.output_dir, exist_ok=True)
+        
+        # Initialize Firebase if available
+        global FIREBASE_AVAILABLE, db, bucket
+        if FIREBASE_AVAILABLE:
+            try:
+                # Initialize Firebase Admin SDK if not already initialized
+                if not firebase_admin._apps:
+                    # Try to initialize with default credentials
+                    try:
+                        firebase_admin.initialize_app()
+                    except Exception as e:
+                        print(f"Could not initialize Firebase with default credentials: {e}")
+                        FIREBASE_AVAILABLE = False
+                
+                if FIREBASE_AVAILABLE:
+                    # Initialize Firestore and Storage
+                    try:
+                        db = firestore.client()
+                        bucket = storage.bucket('sasyayojana-79840.firebasestorage.app')
+                    except Exception as e:
+                        print(f"Could not initialize Firestore/Storage: {e}")
+                        FIREBASE_AVAILABLE = False
+            except Exception as e:
+                print(f"Error initializing Firebase: {e}")
+                FIREBASE_AVAILABLE = False
     
     def generate_land_polygon(self, center_lat: float, center_lon: float, area_acres: float) -> Polygon:
         """
@@ -144,7 +183,7 @@ class LandLayoutMapper:
     def generate_interactive_map(self, land_use_gdf: gpd.GeoDataFrame, center_lat: float, 
                                 center_lon: float, recommendation) -> folium.Map:
         """
-        Generate an interactive Folium map with land use polygons.
+        Generate an interactive Folium map with land use polygons and satellite imagery.
         
         Parameters:
         land_use_gdf (gpd.GeoDataFrame): GeoDataFrame with land use polygons
@@ -155,12 +194,29 @@ class LandLayoutMapper:
         Returns:
         folium.Map: Interactive map object
         """
-        # Create the map
+        # Create the map with satellite imagery
         m = folium.Map(
             location=[center_lat, center_lon], 
-            zoom_start=16, 
-            tiles='OpenStreetMap'
+            zoom_start=16,
+            tiles=None  # We'll add our own tile layers
         )
+        
+        # Add satellite imagery layer
+        folium.TileLayer(
+            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            name='Satellite',
+            overlay=False,
+            control=True
+        ).add_to(m)
+        
+        # Add OpenStreetMap as an alternative
+        folium.TileLayer(
+            tiles='OpenStreetMap',
+            name='Street Map',
+            overlay=False,
+            control=True
+        ).add_to(m)
         
         # Add land use polygons to the map
         for _, row in land_use_gdf.iterrows():
@@ -193,6 +249,20 @@ class LandLayoutMapper:
                      <h3 align="center" style="font-size:16px"><b>AI-Generated Land Use Layout</b></h3>
                      '''
         m.get_root().html.add_child(folium.Element(title_html))
+        
+        # Add a legend
+        legend_html = '''
+        <div style="position: fixed; 
+                    bottom: 50px; left: 50px; width: 150px; height: 90px; 
+                    background-color: white; border:2px solid grey; z-index:9999; 
+                    font-size:14px; padding: 10px">
+        &nbsp; Land Use Legend <br>
+        &nbsp; <i class="fa fa-square" style="color:green"></i> Main Crop (60%)<br>
+        &nbsp; <i class="fa fa-square" style="color:yellow"></i> Intercrop (25%)<br>
+        &nbsp; <i class="fa fa-square" style="color:darkgreen"></i> Trees (15%)
+        </div>
+        '''
+        m.get_root().html.add_child(folium.Element(legend_html))
         
         return m
     
@@ -282,41 +352,43 @@ class LandLayoutMapper:
             recommendation, center_lat, center_lon, land_area_acres
         )
         
+        # Store map data in Firebase if available
+        global FIREBASE_AVAILABLE, db, bucket
+        if FIREBASE_AVAILABLE and db is not None and bucket is not None:
+            try:
+                # Read the HTML content
+                with open(map_filepath, 'r', encoding='utf-8') as f:
+                    map_html = f.read()
+                
+                # Prepare map data for storage
+                map_data = {
+                    'center_lat': center_lat,
+                    'center_lon': center_lon,
+                    'land_area_acres': land_area_acres,
+                    'location': location,
+                    'recommendation': recommendation_dict,
+                    'created_at': datetime.now().isoformat()
+                }
+                
+                # Get filename from filepath
+                filename = os.path.basename(map_filepath)
+                
+                # Upload HTML file to Firebase Storage
+                blob = bucket.blob(f'land-layout-maps/{filename}')
+                blob.upload_from_string(map_html, content_type='text/html')
+                blob.make_public()
+                
+                # Store metadata in Firestore
+                doc_ref = db.collection('land_layout_maps').document()
+                doc_ref.set({
+                    **map_data,
+                    'filename': filename,
+                    'map_url': blob.public_url,
+                    'created_at': firestore.SERVER_TIMESTAMP
+                })
+                
+                print(f"Map data stored in Firebase with ID: {doc_ref.id}")
+            except Exception as e:
+                print(f"Error storing map data in Firebase: {e}")
+        
         return map_filepath, recommendation_dict
-
-# Example usage
-if __name__ == "__main__":
-    # Initialize the mapper
-    mapper = LandLayoutMapper()
-    
-    # Example data (replace with real sensor/API data)
-    soil_data = SoilData(
-        ph=6.7,
-        organic_carbon=1.2,
-        nitrogen=150,
-        phosphorus=40,
-        potassium=200,
-        texture='Loam',
-        drainage='Moderate'
-    )
-    
-    weather_data = WeatherData(
-        rainfall_mm=850,
-        temperature_c=28,
-        humidity=65,
-        solar_radiation=5.5
-    )
-    
-    economic_data = EconomicData(
-        budget_inr=60000,
-        labor_availability='Medium',
-        input_cost_type='Organic'
-    )
-    
-    # Generate recommendation and map
-    map_filepath, recommendation = mapper.get_real_time_recommendation_and_map(
-        soil_data, weather_data, economic_data, 5.0, 12.971, 77.592, "Bangalore, India"
-    )
-    
-    print(f"Map generated successfully: {map_filepath}")
-    print(f"Recommendation: {recommendation}")

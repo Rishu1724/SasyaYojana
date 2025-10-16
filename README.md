@@ -15,6 +15,7 @@ Sasya-Mitra is an advanced agricultural AI system that helps farmers make inform
 - 🌐 **Multi-language Support**: Available in English, Hindi, Marathi, Telugu, and Kannada
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 - 🔐 **Secure Authentication**: Firebase Authentication for user accounts
+- ☁️ **Cloud Storage**: All maps and data stored in Firebase Cloud Storage
 - 🔄 **Continuous Learning**: Improves predictions based on farmer feedback
 
 ## Prerequisites
@@ -51,6 +52,7 @@ Sasya-Mitra is an advanced agricultural AI system that helps farmers make inform
    - Add your Firebase configuration to `src/firebase.js`
    - Enable Authentication (Email/Password and Google)
    - Enable Firestore Database
+   - Enable Firebase Storage
 
 5. Set up environment variables:
    - Create a `.env` file in the root directory
@@ -58,6 +60,9 @@ Sasya-Mitra is an advanced agricultural AI system that helps farmers make inform
      ```
      VITE_WEATHER_API_KEY=your_openweathermap_api_key
      ```
+
+6. Set up Firebase Admin SDK (for backend integration):
+   - See [FIREBASE_SETUP_INSTRUCTIONS.md](FIREBASE_SETUP_INSTRUCTIONS.md) for detailed setup instructions
 
 ## Dataset Integration
 
@@ -81,6 +86,7 @@ To train the AI models with your datasets:
    ```bash
    npm run model:process-data
    ```
+
 3. Train the models:
    ```bash
    npm run model:train

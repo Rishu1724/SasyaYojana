@@ -1,0 +1,26 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "functions"
+
+[dev]
+  command = "npm run dev"
+  port = 8888
+  targetPort = 5173
+
+[[redirects]]
+  from = "/api/*"
+  to = "http://localhost:5001/api/:splat"
+  status = 200
+  force = true
+  conditions = {Role = ["admin", "editor"]}
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[template.environment]
+  VITE_WEATHER_API_KEY = "Your OpenWeatherMap API Key"
+  REACT_APP_FIREBASE_API_KEY = "Your Firebase API Key"
+  REACT_APP_GOOGLE_MAPS_API_KEY = "Your Google Maps API Key"

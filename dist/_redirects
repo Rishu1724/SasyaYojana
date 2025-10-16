@@ -1,0 +1,10 @@
+# Redirects for SPA client-side routing
+/*    /index.html   200
+
+# API redirects (these will need to be updated to point to your actual backend)
+/api/*  https://your-backend-url.com/api/:splat  200
+
+# Redirect for map API
+/api/generate-land-layout-map  https://your-backend-url.com/api/generate-land-layout-map  200
+/api/get-map/*  https://your-backend-url.com/api/get-map/:splat  200
+/api/latest-map  https://your-backend-url.com/api/latest-map  200
