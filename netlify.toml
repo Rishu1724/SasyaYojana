@@ -10,10 +10,8 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "http://localhost:5001/api/:splat"
+  to = "/.netlify/functions/api-proxy"
   status = 200
-  force = true
-  conditions = {Role = ["admin", "editor"]}
 
 [[redirects]]
   from = "/*"

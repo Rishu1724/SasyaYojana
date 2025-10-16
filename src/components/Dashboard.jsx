@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -9,6 +8,7 @@ import AIPlanner from './AIPlanner';
 import agroIntelService from '../services/agroIntelService';
 import FeedbackForm from './FeedbackForm';
 import mapStorageService from '../services/mapStorageService';
+import { generateLandLayoutMap } from '../utils/api';
 
 // Map container style
 const mapContainerStyle = {
@@ -283,10 +283,10 @@ const Dashboard = () => {
         }
       };
 
-      // Call the map API to generate the layout
-      const response = await axios.post('/api/generate-land-layout-map', mapData);
+      // Call the map API to generate the layout using the new utility
+      const response = await generateLandLayoutMap(mapData);
       
-      if (response.data.success) {
+      if (response.success) {
         console.log('Land layout map generated successfully');
         
         // Store map data in Firebase
@@ -299,13 +299,13 @@ const Dashboard = () => {
             soil_data: mapData.soil_data,
             weather_data: mapData.weather_data,
             economic_data: mapData.economic_data,
-            recommendation: response.data.recommendation,
+            recommendation: response.recommendation,
             created_at: new Date(),
             user_id: auth.currentUser ? auth.currentUser.uid : null
           };
-          
+        
           // Store in Firebase
-          const storedMap = await mapStorageService.storeMap(mapStorageData, response.data.map_file_path);
+          const storedMap = await mapStorageService.storeMap(mapStorageData, response.map_file_path);
           setMapId(storedMap.id);
           console.log('Map stored in Firebase with ID:', storedMap.id);
         } catch (storageError) {
@@ -316,15 +316,15 @@ const Dashboard = () => {
         const iframe = document.querySelector('iframe[title="AI Land Layout Map"]');
         if (iframe) {
           // Use the map URL from the response if available, otherwise refresh the iframe
-          if (response.data.map_url) {
-            iframe.src = response.data.map_url;
+          if (response.map_url) {
+            iframe.src = response.map_url;
           } else {
             // Fallback to local file
-            iframe.src = `/api/get-map/${encodeURIComponent(response.data.map_file_path.split('/').pop())}`;
+            iframe.src = `/api/get-map/${encodeURIComponent(response.map_file_path.split('/').pop())}`;
           }
         }
       } else {
-        console.error('Failed to generate land layout map:', response.data.message);
+        console.error('Failed to generate land layout map:', response.message);
       }
     } catch (error) {
       console.error('Error generating land layout map:', error);

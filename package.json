@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run copy-files",
     "preview": "vite preview",
+    "copy-files": "node scripts/copy-files.js",
     "model:process-data": "python models/process_user_datasets.py",
     "model:train": "python models/train_models.py",
     "model:retrain": "python models/retrain_model.py",

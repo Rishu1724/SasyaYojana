@@ -1,0 +1,13 @@
+{
+  "name": "sasya-yojana-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for Sasya-Yojana",
+  "main": "api-proxy.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  }
+}

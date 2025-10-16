@@ -11,7 +11,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'firebase'],
+          vendor: ['react', 'react-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
           maps: ['@react-google-maps/api'],
           utils: ['axios', 'i18next', 'react-i18next']
         }
@@ -22,5 +23,10 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
   }
 })

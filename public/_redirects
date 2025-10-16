@@ -1,0 +1,8 @@
+# Redirects for SPA client-side routing
+/*    /index.html   200
+
+# API redirects to Netlify functions
+/api/generate-land-layout-map  /.netlify/functions/api-proxy  200
+/api/get-map/*  /.netlify/functions/api-proxy  200
+/api/latest-map  /.netlify/functions/api-proxy  200
+/api/*  /.netlify/functions/api-proxy  200
